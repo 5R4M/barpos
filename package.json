@@ -1,0 +1,19 @@
+{
+  "name": "barpos",
+  "version": "1.0.0",
+  "description": "Sistema POS para Bar y Restaurante - Gestión de Mesas, Órdenes y Facturación",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": ["pos", "restaurante", "bar", "electron"],
+  "author": "BarPOS",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "lowdb": "^1.0.0"
+  },
+  "devDependencies": {
+    "electron": "^29.1.0"
+  }
+}
