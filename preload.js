@@ -4,6 +4,11 @@ contextBridge.exposeInMainWorld('api', {
   auth: {
     login: (u, p) => ipcRenderer.invoke('auth:login', u, p)
   },
+  window: {
+    expand:   () => ipcRenderer.invoke('window:expand'),
+    show:     () => ipcRenderer.invoke('window:show'),
+    collapse: () => ipcRenderer.invoke('window:collapse')
+  },
   users: {
     list:   ()        => ipcRenderer.invoke('users:list'),
     create: (d)       => ipcRenderer.invoke('users:create', d),
@@ -32,6 +37,9 @@ contextBridge.exposeInMainWorld('api', {
     addItem:    (orderId, productId, qty)    => ipcRenderer.invoke('orders:addItem', orderId, productId, qty),
     updateItem: (itemId, qty)                => ipcRenderer.invoke('orders:updateItem', itemId, qty),
     removeItem: (itemId)                     => ipcRenderer.invoke('orders:removeItem', itemId),
-    close:      (orderId)                    => ipcRenderer.invoke('orders:close', orderId)
+    close:      (orderId)                    => ipcRenderer.invoke('orders:close', orderId),
+    cancel:     (id)                         => ipcRenderer.invoke('orders:cancel', id),
+    delete:     (id)                         => ipcRenderer.invoke('orders:delete', id),
+    history:    (dateFrom, dateTo)           => ipcRenderer.invoke('orders:history', dateFrom, dateTo)
   }
 });

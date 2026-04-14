@@ -6,23 +6,44 @@ let db;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1380,
-    height: 860,
-    minWidth: 1100,
-    minHeight: 680,
+    width: 420,
+    height: 540,
+    resizable: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false
     },
-    title: 'BarPOS - Sistema de Punto de Venta',
+    title: 'La Taberna — Barra y Restaurante',
     show: false,
-    backgroundColor: '#0f172a'
+    backgroundColor: '#1a3667'
   });
 
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
   mainWindow.once('ready-to-show', () => mainWindow.show());
 }
+
+ipcMain.handle('window:expand', () => {
+  mainWindow.setOpacity(0);
+  mainWindow.setResizable(true);
+  mainWindow.setMinimumSize(1100, 680);
+  mainWindow.setSize(1380, 860, false);
+  mainWindow.center();
+});
+
+ipcMain.handle('window:show', () => {
+  mainWindow.setOpacity(1);
+});
+
+ipcMain.handle('window:collapse', () => {
+  mainWindow.setOpacity(0);
+  mainWindow.setResizable(true);
+  mainWindow.setMinimumSize(1, 1);
+  mainWindow.setSize(420, 540, false);
+  mainWindow.setResizable(false);
+  mainWindow.center();
+  mainWindow.setOpacity(1);
+});
 
 app.whenReady().then(() => {
   db = require('./database');
@@ -70,3 +91,6 @@ ipcMain.handle('orders:addItem',    (_, orderId, productId, qty) => db.addOrderI
 ipcMain.handle('orders:updateItem', (_, itemId, qty)             => db.updateOrderItem(itemId, qty));
 ipcMain.handle('orders:removeItem', (_, itemId)                  => db.removeOrderItem(itemId));
 ipcMain.handle('orders:close',      (_, orderId)                 => db.closeOrder(orderId));
+ipcMain.handle('orders:cancel',     (_, id)                       => db.cancelOrder(id));
+ipcMain.handle('orders:delete',     (_, id)                       => db.deleteOrder(id));
+ipcMain.handle('orders:history',    (_, dateFrom, dateTo)         => db.getOrderHistory(dateFrom, dateTo));

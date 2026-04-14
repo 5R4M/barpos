@@ -4,16 +4,48 @@
   "description": "Sistema POS para Bar y Restaurante - Gestión de Mesas, Órdenes y Facturación",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder --win --x64"
   },
-  "keywords": ["pos", "restaurante", "bar", "electron"],
-  "author": "BarPOS",
+  "keywords": [
+    "pos",
+    "restaurante",
+    "bar",
+    "electron"
+  ],
+  "author": "La Taberna",
   "license": "MIT",
+  "build": {
+    "appId": "com.lataberna.barpos",
+    "productName": "La Taberna POS",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerLanguages": [
+        "es"
+      ],
+      "language": "3082"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "database.js",
+      "src/**/*",
+      "node_modules/**/*"
+    ]
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "lowdb": "^1.0.0"
   },
   "devDependencies": {
-    "electron": "^29.1.0"
+    "electron": "^29.1.0",
+    "electron-builder": "^24.13.3"
   }
 }
