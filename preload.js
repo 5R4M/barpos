@@ -40,6 +40,7 @@ contextBridge.exposeInMainWorld('api', {
     close:      (orderId)                    => ipcRenderer.invoke('orders:close', orderId),
     cancel:     (id)                         => ipcRenderer.invoke('orders:cancel', id),
     delete:     (id)                         => ipcRenderer.invoke('orders:delete', id),
-    history:    (dateFrom, dateTo)           => ipcRenderer.invoke('orders:history', dateFrom, dateTo)
+    history:       (dateFrom, dateTo) => ipcRenderer.invoke('orders:history', dateFrom, dateTo),
+    waiterHistory: (dateFrom, dateTo) => ipcRenderer.invoke('orders:waiterHistory', dateFrom, dateTo)
   }
 });

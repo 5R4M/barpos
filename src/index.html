@@ -66,10 +66,29 @@
         </span>
         <span>Mesas</span>
       </button>
-      <button class="nav-btn" id="nav-history" onclick="showMainView('history')">
-        <span class="nav-icon">📊</span>
-        <span>Historial</span>
-      </button>
+      <!-- Árbol de historial -->
+      <div class="nav-tree show" id="nav-history-tree">
+        <button class="nav-btn nav-tree-parent" onclick="toggleHistoryMenu()">
+          <span class="nav-icon">📊</span>
+          <span>Historial</span>
+          <span class="nav-chevron" id="nav-history-chevron">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
+        </button>
+        <div class="nav-tree-children" id="nav-history-children">
+          <button class="nav-btn nav-child active" id="nav-hist-cobros" onclick="showHistorialTab('cobros')">
+            <span class="nav-child-line"></span>
+            <span class="nav-icon">🧾</span>
+            <span>Cobros</span>
+          </button>
+          <button class="nav-btn nav-child" id="nav-hist-meseros" onclick="showHistorialTab('meseros')">
+            <span class="nav-child-line"></span>
+            <span class="nav-icon">👤</span>
+            <span>Meseros</span>
+          </button>
+        </div>
+      </div>
 
       <!-- Árbol de administración (solo admin) -->
       <div class="nav-tree" id="nav-admin-tree">
@@ -151,8 +170,12 @@
         <h2>Mesas y Barras</h2>
         <div class="header-actions">
           <div class="legend">
-            <span class="legend-dot libre"></span> Libre
-            <span class="legend-dot ocupada"></span> Ocupada
+            <span class="legend-item" data-filter="libre" onclick="filterTables('libre')">
+              <span class="legend-dot libre"></span> Libre
+            </span>
+            <span class="legend-item" data-filter="ocupada" onclick="filterTables('ocupada')">
+              <span class="legend-dot ocupada"></span> Ocupada
+            </span>
           </div>
           <button class="btn btn-outline" onclick="refreshTables()">↻ Actualizar</button>
         </div>
@@ -213,28 +236,45 @@
     <!-- ·· HISTORY VIEW ·· -->
     <div id="view-history" class="content-section">
       <div class="section-header">
-        <h2>🧾 Historial de Cobros</h2>
+        <h2 id="history-section-title">🧾 Historial de Cobros</h2>
       </div>
 
-      <!-- Filtro de fechas -->
-      <div class="hist-filter-bar">
-        <div class="hist-filter-group">
-          <label for="hist-date-from">Desde</label>
-          <input type="date" id="hist-date-from">
+      <!-- ── Tab: Cobros ── -->
+      <div id="hist-cobros-tab" class="hist-tab active">
+        <!-- Filtro de fechas -->
+        <div class="hist-filter-bar">
+          <div class="hist-filter-group">
+            <label for="hist-date-from">Desde</label>
+            <input type="date" id="hist-date-from">
+          </div>
+          <div class="hist-filter-group">
+            <label for="hist-date-to">Hasta</label>
+            <input type="date" id="hist-date-to">
+          </div>
+          <button class="btn btn-primary" onclick="loadHistory()">🔍 Buscar</button>
+          <button class="btn btn-outline"  onclick="clearHistoryFilters()">✕ Limpiar</button>
         </div>
-        <div class="hist-filter-group">
-          <label for="hist-date-to">Hasta</label>
-          <input type="date" id="hist-date-to">
-        </div>
-        <button class="btn btn-primary" onclick="loadHistory()">🔍 Buscar</button>
-        <button class="btn btn-outline"  onclick="clearHistoryFilters()">✕ Limpiar</button>
+        <div id="history-summary" class="hist-summary-bar"></div>
+        <div id="history-list" class="hist-list"></div>
       </div>
 
-      <!-- Resumen -->
-      <div id="history-summary" class="hist-summary-bar"></div>
-
-      <!-- Lista de órdenes -->
-      <div id="history-list" class="hist-list"></div>
+      <!-- ── Tab: Meseros ── -->
+      <div id="hist-meseros-tab" class="hist-tab">
+        <div class="hist-filter-bar">
+          <div class="hist-filter-group">
+            <label for="wh-date-from">Desde</label>
+            <input type="date" id="wh-date-from">
+          </div>
+          <div class="hist-filter-group">
+            <label for="wh-date-to">Hasta</label>
+            <input type="date" id="wh-date-to">
+          </div>
+          <button class="btn btn-primary" onclick="loadWaiterHistory()">🔍 Buscar</button>
+          <button class="btn btn-outline"  onclick="clearWaiterFilters()">✕ Limpiar</button>
+        </div>
+        <div id="waiter-summary" class="hist-summary-bar"></div>
+        <div id="waiter-list" class="hist-list"></div>
+      </div>
     </div>
 
     <!-- ·· ADMIN VIEW ·· -->

@@ -14,6 +14,7 @@ const State = {
   openOrders:     [],
   currentOrderId: null,
   categoryFilter: null,   // null = todos
+  tableFilter:    null,   // null = todas | 'libre' | 'ocupada'
   editProduct:    null,
   editTable:      null,
   editUser:       null,
@@ -49,10 +50,12 @@ async function handleLogin(e) {
     document.getElementById('sidebar-role').textContent = user.role === 'admin' ? 'Administrador' : 'Mesero';
     document.getElementById('user-avatar').textContent  = user.full_name.charAt(0).toUpperCase();
 
-    // Mostrar/ocultar árbol admin según rol
+    // Mostrar/ocultar árboles según rol
     const isAdmin = user.role === 'admin';
-    const adminTree = document.getElementById('nav-admin-tree');
-    if (adminTree) adminTree.style.display = isAdmin ? 'block' : 'none';
+    const adminTree   = document.getElementById('nav-admin-tree');
+    const historyTree = document.getElementById('nav-history-tree');
+    if (adminTree)   adminTree.style.display   = isAdmin ? 'block' : 'none';
+    if (historyTree) historyTree.style.display  = isAdmin ? 'block' : 'none';
     document.querySelectorAll('.admin-only')
       .forEach(el => el.style.display = isAdmin ? 'inline-flex' : 'none');
 
@@ -79,13 +82,19 @@ function logout() {
   State.tables         = [];
   State.openOrders     = [];
 
-  // Ocultar y colapsar árbol admin al cerrar sesión
-  const adminTree = document.getElementById('nav-admin-tree');
-  if (adminTree) adminTree.style.display = 'none';
-  const children = document.getElementById('nav-admin-children');
-  const chevron  = document.getElementById('nav-admin-chevron');
-  if (children) children.classList.remove('open');
-  if (chevron)  chevron.classList.remove('open');
+  // Ocultar y colapsar árboles al cerrar sesión
+  const adminTree   = document.getElementById('nav-admin-tree');
+  const historyTree = document.getElementById('nav-history-tree');
+  if (adminTree)   adminTree.style.display   = 'none';
+  if (historyTree) historyTree.style.display  = 'none';
+  const adminChildren = document.getElementById('nav-admin-children');
+  const adminChevron  = document.getElementById('nav-admin-chevron');
+  const histChildren  = document.getElementById('nav-history-children');
+  const histChevron   = document.getElementById('nav-history-chevron');
+  if (adminChildren) adminChildren.classList.remove('open');
+  if (adminChevron)  adminChevron.classList.remove('open');
+  if (histChildren)  histChildren.classList.remove('open');
+  if (histChevron)   histChevron.classList.remove('open');
   document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
 
   document.getElementById('login-username').value = '';
@@ -125,6 +134,9 @@ const ADMIN_ROUTES = { 'admin-productos': 'productos', 'admin-mesas': 'mesas', '
 const ADMIN_LABELS = { productos: 'Productos', mesas: 'Mesas', usuarios: 'Usuarios' };
 
 function showMainView(name) {
+  // Historial solo para admins
+  if (name === 'history' && State.user && State.user.role !== 'admin') return;
+
   document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 
@@ -149,10 +161,20 @@ function showMainView(name) {
 // MESAS
 // ═══════════════════════════════════════════════════════════════════════════════
 async function refreshTables() {
+  State.tableFilter = null;
   [State.tables, State.openOrders] = await Promise.all([
     window.api.tables.list(),
     window.api.orders.openList()
   ]);
+  renderTables();
+}
+
+function filterTables(status) {
+  State.tableFilter = State.tableFilter === status ? null : status;
+  // actualizar leyenda
+  document.querySelectorAll('.legend-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.filter === State.tableFilter);
+  });
   renderTables();
 }
 
@@ -163,51 +185,104 @@ function renderTables() {
     return;
   }
 
-  grid.innerHTML = State.tables.map(t => {
+  // Sincronizar leyenda con el estado actual del filtro
+  document.querySelectorAll('.legend-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.filter === State.tableFilter);
+  });
+
+  // Ordenar SIEMPRE: ocupadas primero, luego libres
+  let list = [...State.tables].sort((a, b) => {
+    const rank = s => s === 'ocupada' ? 0 : 1;
+    return rank(a.status) - rank(b.status);
+  });
+
+  // Filtrar solo si hay filtro activo
+  if (State.tableFilter) {
+    list = list.filter(t => t.status === State.tableFilter);
+  }
+
+  if (!list.length) {
+    grid.innerHTML = `<p style="color:#94a3b8;padding:20px">No hay mesas ${State.tableFilter === 'libre' ? 'libres' : 'ocupadas'}.</p>`;
+    return;
+  }
+
+  function buildCard(t) {
     const isOcupada = t.status === 'ocupada';
     const n = t.name.toLowerCase();
-    let iconHtml;
     const color   = isOcupada ? '#ef4444' : '#3b82f6';
     const colorBg = isOcupada ? '#fee2e2' : '#dbeafe';
     const colorLt = isOcupada ? '#fca5a5' : '#93c5fd';
+    let iconHtml;
     if (n.includes('barra')) {
       iconHtml = `<span class="card-icon">🍺</span>`;
     } else if (n.includes('terraza')) {
       iconHtml = `<span class="card-icon">🌿</span>`;
     } else {
       const num = (t.name.match(/\d+/) || [''])[0] || t.name.charAt(0).toUpperCase();
-      // Mesa cuadrada con sillas — vista superior SVG
       iconHtml = `
         <svg class="tbl-svg" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-          <!-- silla arriba -->
           <rect x="18" y="3"  width="24" height="10" rx="3" fill="${colorLt}"/>
-          <!-- silla abajo -->
           <rect x="18" y="47" width="24" height="10" rx="3" fill="${colorLt}"/>
-          <!-- silla izquierda -->
           <rect x="3"  y="18" width="10" height="24" rx="3" fill="${colorLt}"/>
-          <!-- silla derecha -->
           <rect x="47" y="18" width="10" height="24" rx="3" fill="${colorLt}"/>
-          <!-- superficie de la mesa -->
           <rect x="13" y="13" width="34" height="34" rx="6" fill="${colorBg}" stroke="${color}" stroke-width="2.5"/>
-          <!-- número -->
           <text x="30" y="35" text-anchor="middle" font-size="16" font-weight="900"
                 font-family="Segoe UI,system-ui,sans-serif" fill="${color}">${num}</text>
         </svg>`;
     }
+    const order    = isOcupada ? State.openOrders.find(o => Number(o.table_id) === Number(t.id)) : null;
+    const hasItems = order && order.item_count > 0;
+    const isOwn    = order && State.user && order.user_id === State.user.id;
+    const canLiberar = isOcupada && (isOwn || (State.user && State.user.role === 'admin'));
+
+    const bottomHtml = isOcupada ? `
+        <div class="card-bottom">
+          ${order ? `<div class="card-waiter ${isOwn ? 'own' : 'other'}">🧑‍🍳 ${esc(order.user_name)}</div>` : ''}
+          ${hasItems ? `<div class="card-total">${fmt(order.total)}</div>` : '<div class="card-total" style="color:#94a3b8;font-size:13px">Sin pedido</div>'}
+          <span class="card-status">Ocupada</span>
+          ${canLiberar ? `<button class="btn-liberar-card" onclick="event.stopPropagation(); confirmarLiberarMesa(${t.id})">🔓 Liberar</button>` : ''}
+        </div>` : `
+        <div class="card-bottom">
+          <span class="card-status">Libre</span>
+        </div>`;
+
     return `
       <div class="table-card ${t.status}" onclick="openTable(${t.id})">
         ${iconHtml}
         <div class="card-name">${esc(t.name)}</div>
         <div class="card-cap">👥 ${t.capacity} personas</div>
-        <span class="card-status">${isOcupada ? 'Ocupada' : 'Libre'}</span>
-        ${isOcupada ? `<button class="btn-liberar-card" onclick="event.stopPropagation(); confirmarLiberarMesa(${t.id})">🔓 Liberar</button>` : ''}
+        ${bottomHtml}
       </div>`;
-  }).join('');
+  }
+
+  // Sin filtro: renderizar en dos grupos con separador visual
+  if (!State.tableFilter) {
+    const ocupadas = list.filter(t => t.status === 'ocupada');
+    const libres   = list.filter(t => t.status === 'libre');
+    let html = '';
+    if (ocupadas.length) {
+      html += `<div class="tables-section-label ocupada-label">🔴 Ocupadas (${ocupadas.length})</div>`;
+      html += ocupadas.map(buildCard).join('');
+    }
+    if (libres.length) {
+      html += `<div class="tables-section-label libre-label">🟢 Libres (${libres.length})</div>`;
+      html += libres.map(buildCard).join('');
+    }
+    grid.innerHTML = html;
+  } else {
+    grid.innerHTML = list.map(buildCard).join('');
+  }
 }
 
 async function openTable(tableId) {
   // ¿hay orden abierta?
-  const existingOrder = State.openOrders.find(o => o.table_id === tableId);
+  const existingOrder = State.openOrders.find(o => Number(o.table_id) === Number(tableId));
+
+  // Bloquear meseros que intenten entrar a una mesa de otro compañero
+  if (existingOrder && State.user.role !== 'admin' && existingOrder.user_id !== State.user.id) {
+    showToast(`Mesa atendida por ${existingOrder.user_name}`, 'error');
+    return;
+  }
 
   let orderId;
   if (existingOrder) {
@@ -238,9 +313,15 @@ function backToTables() {
 }
 
 function confirmarLiberarMesa(tableId) {
-  const order = State.openOrders.find(o => o.table_id === tableId);
+  const order = State.openOrders.find(o => Number(o.table_id) === Number(tableId));
   if (!order) { showToast('No se encontró la orden abierta', 'error'); return; }
-  const hasItems = /* comprobamos en la orden actual */ true;
+
+  // Bloquear meseros que intenten liberar una mesa de otro compañero
+  if (State.user.role !== 'admin' && order.user_id !== State.user.id) {
+    showToast(`Solo ${order.user_name} puede liberar esta mesa`, 'error');
+    return;
+  }
+
   document.getElementById('confirm-title').textContent   = '🔓 Liberar Mesa';
   document.getElementById('confirm-message').textContent =
     'Se cancelará la orden de esta mesa y quedará libre. ¿Continuar?';
@@ -334,8 +415,6 @@ async function changeItemQty(itemId, newQty) {
 // ── Menú de productos ─────────────────────────────────────────────────────────
 function buildMenuFilters() {
   const bar = document.getElementById('menu-filter-bar');
-
-  // Obtener tipos únicos
   const typeLabels = { bebida: '🍹 Bebidas', boquita: '🥨 Boquitas', comida: '🍽️ Comida' };
   const types = [...new Set(State.categories.map(c => c.type))];
 
@@ -346,12 +425,6 @@ function buildMenuFilters() {
       <button class="cat-filter-btn type-${type} ${State.categoryFilter === type ? 'active' : ''}"
               onclick="filterMenu('${type}', this)">
         ${typeLabels[type] || type}
-      </button>`).join('') +
-    State.categories.map(cat => `
-      <button class="cat-filter-btn ${State.categoryFilter === 'cat_' + cat.id ? 'active' : ''}"
-              onclick="filterMenu('cat_${cat.id}', this)"
-              style="font-size:11px">
-        ${esc(cat.name)}
       </button>`).join('');
 }
 
@@ -363,28 +436,59 @@ function filterMenu(filter, btn) {
 }
 
 function renderMenuProducts() {
-  const grid    = document.getElementById('menu-products-grid');
-  let filtered  = State.products.filter(p => p.available);
+  const grid = document.getElementById('menu-products-grid');
+  let products = State.products.filter(p => p.available);
 
-  if (State.categoryFilter !== null) {
-    if (State.categoryFilter && State.categoryFilter.startsWith('cat_')) {
-      const catId = parseInt(State.categoryFilter.replace('cat_', ''));
-      filtered = filtered.filter(p => p.category_id === catId);
-    } else if (State.categoryFilter) {
-      filtered = filtered.filter(p => p.category_type === State.categoryFilter);
-    }
+  if (State.categoryFilter) {
+    products = products.filter(p => p.category_type === State.categoryFilter);
   }
 
-  if (!filtered.length) {
-    grid.innerHTML = '<p style="color:#94a3b8;padding:20px;grid-column:1/-1">Sin productos en esta categoría.</p>';
+  if (!products.length) {
+    grid.innerHTML = '<p style="color:#94a3b8;padding:20px">Sin productos en esta categoría.</p>';
     return;
   }
 
-  grid.innerHTML = filtered.map(p => `
-    <div class="product-card" onclick="addProductToOrder(${p.id})">
-      <div class="prod-name">${esc(p.name)}</div>
-      <div class="prod-price">${fmt(p.price)}</div>
-    </div>`).join('');
+  // Agrupar por categoría
+  const groups = {};
+  for (const p of products) {
+    if (!groups[p.category_id]) groups[p.category_id] = { name: p.category_name, type: p.category_type, products: [] };
+    groups[p.category_id].products.push(p);
+  }
+
+  // Ordenar: tipo (bebida → boquita → comida) luego nombre
+  const typeOrder = { bebida: 0, boquita: 1, comida: 2 };
+  const sorted = Object.entries(groups).sort(([, a], [, b]) =>
+    (typeOrder[a.type] ?? 3) - (typeOrder[b.type] ?? 3) || a.name.localeCompare(b.name)
+  );
+
+  grid.innerHTML = sorted.map(([catId, group]) => {
+    const gId = `mc-${catId}`;
+    return `
+      <div class="menu-cat-section">
+        <div class="menu-cat-header" onclick="toggleMenuCat('${gId}')">
+          <span class="menu-cat-toggle open">▼</span>
+          <span class="menu-cat-name">${esc(group.name)}</span>
+          <span class="menu-cat-count">${group.products.length}</span>
+        </div>
+        <div class="menu-cat-grid open" id="${gId}">
+          ${group.products.map(p => `
+            <div class="product-card" onclick="addProductToOrder(${p.id})">
+              <div class="prod-name">${esc(p.name)}</div>
+              <div class="prod-price">${fmt(p.price)}</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleMenuCat(gId) {
+  const grid = document.getElementById(gId);
+  if (!grid) return;
+  const isOpen = grid.classList.contains('open');
+  grid.classList.toggle('open', !isOpen);
+  const toggle = grid.previousElementSibling.querySelector('.menu-cat-toggle');
+  toggle.classList.toggle('open', !isOpen);
+  toggle.textContent = isOpen ? '▶' : '▼';
 }
 
 async function addProductToOrder(productId) {
@@ -802,13 +906,141 @@ function clearHistoryFilters() {
 }
 
 function initHistoryView() {
-  // Poner fecha de hoy como valor por defecto la primera vez
   const today = new Date().toISOString().slice(0, 10);
   if (!document.getElementById('hist-date-from').value) {
     document.getElementById('hist-date-from').value = today;
     document.getElementById('hist-date-to').value   = today;
   }
-  loadHistory();
+  if (!document.getElementById('wh-date-from').value) {
+    document.getElementById('wh-date-from').value = today;
+    document.getElementById('wh-date-to').value   = today;
+  }
+  // Abrir el árbol de historial si no está abierto
+  const children = document.getElementById('nav-history-children');
+  if (!children.classList.contains('open')) toggleHistoryMenu();
+  // Mostrar el tab activo actual
+  const activeTab = document.querySelector('.hist-tab.active');
+  if (activeTab && activeTab.id === 'hist-meseros-tab') {
+    loadWaiterHistory();
+  } else {
+    loadHistory();
+  }
+}
+
+function toggleHistoryMenu() {
+  const children = document.getElementById('nav-history-children');
+  const chevron  = document.getElementById('nav-history-chevron');
+  const open = children.classList.toggle('open');
+  chevron.classList.toggle('open', open);
+}
+
+function showHistorialTab(tab) {
+  // Activar nav child
+  document.querySelectorAll('#nav-history-children .nav-child').forEach(b => b.classList.remove('active'));
+  document.getElementById(`nav-hist-${tab}`).classList.add('active');
+
+  // Cambiar tab
+  document.querySelectorAll('.hist-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`hist-${tab}-tab`).classList.add('active');
+
+  // Cambiar título
+  const titles = { cobros: '🧾 Historial de Cobros', meseros: '👤 Historial de Meseros' };
+  document.getElementById('history-section-title').textContent = titles[tab];
+
+  // Ir a la vista historial y cargar
+  showMainView('history');
+  if (tab === 'cobros')   loadHistory();
+  if (tab === 'meseros')  loadWaiterHistory();
+}
+
+// ── Historial de Meseros ──────────────────────────────────────────────────────
+async function loadWaiterHistory() {
+  const dateFrom = document.getElementById('wh-date-from').value || null;
+  const dateTo   = document.getElementById('wh-date-to').value   || null;
+  const data = await window.api.orders.waiterHistory(dateFrom, dateTo);
+  renderWaiterHistory(data);
+}
+
+function renderWaiterHistory(data) {
+  const summaryEl = document.getElementById('waiter-summary');
+  const listEl    = document.getElementById('waiter-list');
+
+  if (!data.length) {
+    summaryEl.innerHTML = '';
+    listEl.innerHTML = '<p class="hist-empty">No hay datos en el período seleccionado.</p>';
+    return;
+  }
+
+  const grandTotal  = data.reduce((s, w) => s + w.total, 0);
+  const totalOrders = data.reduce((s, w) => s + w.orders.length, 0);
+
+  summaryEl.innerHTML = `
+    <div class="hist-stat-card">
+      <div class="hist-stat-value">${data.length}</div>
+      <div class="hist-stat-label">Meseros activos</div>
+    </div>
+    <div class="hist-stat-card">
+      <div class="hist-stat-value">${totalOrders}</div>
+      <div class="hist-stat-label">Órdenes totales</div>
+    </div>
+    <div class="hist-stat-card green">
+      <div class="hist-stat-value">${fmt(grandTotal)}</div>
+      <div class="hist-stat-label">Total recaudado</div>
+    </div>`;
+
+  listEl.innerHTML = data.map((w, wi) => {
+    const gId = `wh-waiter-${wi}`;
+    const ordRows = w.orders.map(o => {
+      const [datePart, timePart] = formatDateTime(o.closed_at);
+      const prodList = o.items.map(i =>
+        `<span class="wh-product-tag">${esc(i.product_name)} ×${i.quantity}</span>`
+      ).join('');
+      return `
+        <div class="wh-order-row">
+          <span class="wh-order-meta">
+            <b>#${o.id}</b>
+            <span class="wh-table-tag">${esc(o.table_name)}</span>
+            <span class="wh-datetime">${datePart} ${timePart}</span>
+          </span>
+          <div class="wh-products">${prodList}</div>
+          <span class="wh-order-total">${fmt(o.total)}</span>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="wh-waiter-card">
+        <div class="wh-waiter-header" onclick="toggleWaiterCard('${gId}')">
+          <div class="wh-waiter-info">
+            <div class="wh-avatar">${w.user_name.charAt(0).toUpperCase()}</div>
+            <div>
+              <div class="wh-waiter-name">${esc(w.user_name)}</div>
+              <div class="wh-waiter-stats">
+                ${w.orders.length} orden${w.orders.length !== 1 ? 'es' : ''}
+                · ${w.items_qty} producto${w.items_qty !== 1 ? 's' : ''}
+              </div>
+            </div>
+          </div>
+          <div class="wh-waiter-right">
+            <span class="wh-waiter-total">${fmt(w.total)}</span>
+            <span class="wh-chevron" id="${gId}-chev">▼</span>
+          </div>
+        </div>
+        <div class="wh-orders-list" id="${gId}">${ordRows}</div>
+      </div>`;
+  }).join('');
+}
+
+function toggleWaiterCard(gId) {
+  const el  = document.getElementById(gId);
+  const chv = document.getElementById(`${gId}-chev`);
+  const open = el.classList.toggle('open');
+  chv.textContent = open ? '▲' : '▼';
+}
+
+function clearWaiterFilters() {
+  document.getElementById('wh-date-from').value = '';
+  document.getElementById('wh-date-to').value   = '';
+  loadWaiterHistory();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -852,20 +1084,61 @@ function renderProductsTable() {
     return;
   }
 
-  tbody.innerHTML = list.map(p => `
-    <tr>
-      <td><b>${esc(p.name)}</b></td>
-      <td>${esc(p.category_name)}</td>
-      <td><span class="badge badge-${p.category_type}">${typeLabel[p.category_type] || p.category_type}</span></td>
-      <td><b>${fmt(p.price)}</b></td>
-      <td>${p.available
-        ? '<span class="badge badge-active">Sí</span>'
-        : '<span class="badge badge-inactive">No</span>'}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-outline btn-sm" onclick="openProductModal(${p.id})">Editar</button>
-        <button class="btn btn-danger btn-sm"  onclick="confirmDelete('producto', ${p.id}, '${esc(p.name)}')">Eliminar</button>
-      </td>
-    </tr>`).join('');
+  // Agrupar por categoría
+  const groups = {};
+  for (const p of list) {
+    const key = p.category_id;
+    if (!groups[key]) groups[key] = { name: p.category_name, type: p.category_type, products: [] };
+    groups[key].products.push(p);
+  }
+
+  // Ordenar grupos: por tipo luego por nombre
+  const typeOrder = { bebida: 0, boquita: 1, comida: 2 };
+  const sorted = Object.entries(groups).sort(([, a], [, b]) =>
+    (typeOrder[a.type] ?? 3) - (typeOrder[b.type] ?? 3) || a.name.localeCompare(b.name)
+  );
+
+  let html = '';
+  for (const [catId, group] of sorted) {
+    const gId = `ag-${catId}`;
+    const count = group.products.length;
+    html += `
+      <tr class="cat-group-header" data-group="${gId}" onclick="toggleAdminCatGroup('${gId}')">
+        <td colspan="6">
+          <span class="cat-group-toggle">▶</span>
+          <span class="badge badge-${group.type}" style="margin:0 8px 0 6px">${typeLabel[group.type]}</span>
+          <b>${esc(group.name)}</b>
+          <span class="cat-group-count">${count} producto${count !== 1 ? 's' : ''}</span>
+        </td>
+      </tr>`;
+    for (const p of group.products) {
+      html += `
+        <tr class="cat-group-row ${gId}" style="display:none">
+          <td><b>${esc(p.name)}</b></td>
+          <td>${esc(p.category_name)}</td>
+          <td><span class="badge badge-${p.category_type}">${typeLabel[p.category_type] || p.category_type}</span></td>
+          <td><b>${fmt(p.price)}</b></td>
+          <td>${p.available
+            ? '<span class="badge badge-active">Sí</span>'
+            : '<span class="badge badge-inactive">No</span>'}</td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-outline btn-sm" onclick="openProductModal(${p.id})">Editar</button>
+            <button class="btn btn-danger btn-sm"  onclick="confirmDelete('producto', ${p.id}, '${esc(p.name).replace(/'/g, "\\'")}')">Eliminar</button>
+          </td>
+        </tr>`;
+    }
+  }
+
+  tbody.innerHTML = html;
+}
+
+function toggleAdminCatGroup(gId) {
+  const rows = document.querySelectorAll(`tr.${gId}`);
+  if (!rows.length) return;
+  const isOpen = rows[0].style.display !== 'none';
+  rows.forEach(r => r.style.display = isOpen ? 'none' : '');
+  const header = document.querySelector(`.cat-group-header[data-group="${gId}"]`);
+  if (header) header.querySelector('.cat-group-toggle').textContent = isOpen ? '▶' : '▼';
 }
 
 function openProductModal(productId) {
