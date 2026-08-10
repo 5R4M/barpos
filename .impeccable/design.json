@@ -1,0 +1,260 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-10T00:00:00.000Z",
+  "title": "Design System: BarPOS — La Taberna",
+  "extensions": {
+    "colorMeta": {
+      "accent-azul": {
+        "role": "primary",
+        "displayName": "Azul Acción",
+        "canonical": "oklch(62.3% 0.188 260)",
+        "tonalRamp": [
+          "oklch(20% 0.07 260)",
+          "oklch(31% 0.11 260)",
+          "oklch(42% 0.15 260)",
+          "oklch(54.6% 0.215 263)",
+          "oklch(62.3% 0.188 260)",
+          "oklch(74% 0.12 258)",
+          "oklch(86% 0.06 257)",
+          "oklch(95% 0.02 256)"
+        ]
+      },
+      "verde-cobro": {
+        "role": "secondary",
+        "displayName": "Verde Cobro",
+        "canonical": "oklch(72.3% 0.192 150)",
+        "tonalRamp": [
+          "oklch(22% 0.06 150)",
+          "oklch(34% 0.09 150)",
+          "oklch(46% 0.13 150)",
+          "oklch(62.7% 0.170 149)",
+          "oklch(72.3% 0.192 150)",
+          "oklch(82% 0.12 150)",
+          "oklch(90% 0.07 151)",
+          "oklch(97.6% 0.026 152)"
+        ]
+      },
+      "rojo-ocupada": {
+        "role": "tertiary",
+        "displayName": "Rojo Ocupada",
+        "canonical": "oklch(63.7% 0.208 25)",
+        "tonalRamp": [
+          "oklch(22% 0.07 25)",
+          "oklch(34% 0.11 26)",
+          "oklch(46% 0.16 27)",
+          "oklch(57.7% 0.215 27)",
+          "oklch(63.7% 0.208 25)",
+          "oklch(76% 0.13 24)",
+          "oklch(88% 0.06 24)",
+          "oklch(96.5% 0.02 24)"
+        ]
+      },
+      "tinta": {
+        "role": "neutral",
+        "displayName": "Tinta",
+        "canonical": "oklch(27.9% 0.037 260)",
+        "tonalRamp": [
+          "oklch(18% 0.03 260)",
+          "oklch(27.9% 0.037 260)",
+          "oklch(40% 0.04 259)",
+          "oklch(55.4% 0.041 257)",
+          "oklch(70% 0.03 257)",
+          "oklch(86.8% 0.014 256)",
+          "oklch(92.5% 0.008 258)",
+          "oklch(99.4% 0.002 258)"
+        ]
+      },
+      "navy-panel": {
+        "role": "neutral",
+        "displayName": "Navy Panel",
+        "canonical": "oklch(31.8% 0.089 262)",
+        "tonalRamp": [
+          "oklch(18% 0.05 262)",
+          "oklch(25% 0.07 262)",
+          "oklch(31.8% 0.089 262)",
+          "oklch(42% 0.10 262)",
+          "oklch(55% 0.10 261)",
+          "oklch(70% 0.07 260)",
+          "oklch(85% 0.04 259)",
+          "oklch(95% 0.015 258)"
+        ]
+      },
+      "fondo-azulado": {
+        "role": "neutral",
+        "displayName": "Fondo Azulado",
+        "canonical": "oklch(96.8% 0.014 254)",
+        "tonalRamp": [
+          "oklch(20% 0.02 254)",
+          "oklch(32% 0.025 254)",
+          "oklch(45% 0.03 254)",
+          "oklch(60% 0.03 254)",
+          "oklch(75% 0.025 254)",
+          "oklch(88% 0.02 254)",
+          "oklch(96.8% 0.014 254)",
+          "oklch(99.4% 0.002 258)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Solo el nombre del bar en el login. No aparece dentro de la app." },
+      "headline": { "displayName": "Headline", "purpose": "Título de sección en la barra superior, uno por pantalla." },
+      "title": { "displayName": "Title", "purpose": "Nombre de mesa, de producto, encabezado de modal." },
+      "body": { "displayName": "Body", "purpose": "Texto corrido y contenido de tablas." },
+      "label": { "displayName": "Label", "purpose": "Versalita para metadatos: cabeceras de tabla, estado de mesa, filtros." },
+      "data": { "displayName": "Data", "purpose": "Cifras que cambian o se alinean. Siempre tabular-nums." }
+    },
+    "shadows": [
+      {
+        "name": "flotante",
+        "value": "0 20px 45px -18px oklch(27.9% .037 260 / .35)",
+        "purpose": "Exclusiva de modal, toast y tarjeta de login. Prohibida en tarjetas, tablas, botones y paneles."
+      },
+      {
+        "name": "anillo-foco",
+        "value": "0 0 0 3px oklch(62.3% .188 260 / .18)",
+        "purpose": "Estado de foco en campos de formulario, no elevación. Acompaña al borde azul."
+      }
+    ],
+    "motion": [
+      { "name": "ease-out", "value": "cubic-bezier(.23, 1, .32, 1)", "purpose": "Entradas y feedback. Arranca rápido: la interfaz responde antes de que el ojo termine de mirar." },
+      { "name": "ease-in-out", "value": "cubic-bezier(.77, 0, .175, 1)", "purpose": "Movimiento de un elemento que ya está en pantalla." },
+      { "name": "dur-press", "value": "120ms", "purpose": "Escala al presionar. Debe sentirse instantánea." },
+      { "name": "dur", "value": "180ms", "purpose": "Duración por defecto de cambios de estado: color, borde, fondo." },
+      { "name": "dur-slow", "value": "240ms", "purpose": "Techo del sistema. Entrada de modal, apertura del árbol de navegación, toast." }
+    ],
+    "breakpoints": [
+      { "name": "app", "value": "1024px", "purpose": "Ancho mínimo de trabajo. Electron en Windows; no hay layout móvil." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal de la pantalla. Una por vista.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M12 5v14\"/><path d=\"M5 12h14\"/></svg>Nuevo Producto</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 16px; background: oklch(62.3% .188 260); color: oklch(99.4% .002 258); border: none; border-radius: 8px; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-btn-primary svg { flex-shrink: 0; opacity: .85; } .ds-btn-primary:hover { background: oklch(54.6% .215 263); } .ds-btn-primary:hover svg { opacity: 1; } .ds-btn-primary:active { transform: scale(.97); } .ds-btn-primary:focus-visible { outline: 2.5px solid oklch(62.3% .188 260); outline-offset: 2px; }"
+    },
+    {
+      "name": "Botón de contorno",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Botón por defecto de barras de herramientas. Neutro en reposo, azul al pasar el puntero.",
+      "html": "<button class=\"ds-btn-outline\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 12a9 9 0 1 1-2.64-6.36\"/><path d=\"M21 3v6h-6\"/></svg>Actualizar</button>",
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 16px; background: transparent; color: oklch(27.9% .037 260); border: 1.5px solid oklch(86.8% .014 256); border-radius: 8px; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-btn-outline:hover { background: oklch(93.8% .028 256); border-color: oklch(62.3% .188 260); color: oklch(54.6% .215 263); } .ds-btn-outline:active { transform: scale(.97); }"
+    },
+    {
+      "name": "Card de mesa (libre)",
+      "kind": "card",
+      "refersTo": "card-mesa",
+      "description": "Componente firma. Tile con número, estado, capacidad y pie con la acción de abrir orden.",
+      "html": "<div class=\"ds-card-mesa\" role=\"button\" tabindex=\"0\" aria-label=\"Mesa 2, libre\"><div class=\"ds-card-mesa-top\"><span class=\"ds-card-mesa-tile\">2</span><span class=\"ds-card-mesa-state\"><span class=\"ds-card-mesa-dot\"></span>Libre</span></div><div class=\"ds-card-mesa-body\"><div class=\"ds-card-mesa-name\">Mesa 2</div><div class=\"ds-card-mesa-meta\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg>4 personas</div></div><div class=\"ds-card-mesa-foot\"><span class=\"ds-card-mesa-hint\">Abrir orden <svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h13\"/><path d=\"m12 5 7 7-7 7\"/></svg></span></div></div>",
+      "css": ".ds-card-mesa { position: relative; display: flex; flex-direction: column; width: 210px; min-height: 152px; padding: 14px 14px 12px; background: oklch(99.4% .002 258); border: 1px solid oklch(92.5% .008 258); border-radius: 14px; cursor: pointer; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; color: oklch(27.9% .037 260); transition: background-color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-card-mesa-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 12px; } .ds-card-mesa-tile { display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 11px; background: oklch(97.7% .005 256); border: 1px solid oklch(92.5% .008 258); color: oklch(40% .04 259); font-size: 18px; font-weight: 600; letter-spacing: -.5px; font-variant-numeric: tabular-nums; transition: background-color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), color 180ms cubic-bezier(.23,1,.32,1); } .ds-card-mesa-state { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; color: oklch(55.4% .041 257); } .ds-card-mesa-dot { width: 7px; height: 7px; border-radius: 50%; background: oklch(72.3% .192 150); } .ds-card-mesa-body { flex: 1; } .ds-card-mesa-name { font-size: 14.5px; font-weight: 650; letter-spacing: -.1px; } .ds-card-mesa-meta { display: flex; align-items: center; gap: 5px; margin-top: 3px; font-size: 11.5px; color: oklch(55.4% .041 257); } .ds-card-mesa-meta svg { opacity: .7; } .ds-card-mesa-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid oklch(92.5% .008 258); min-height: 38px; } .ds-card-mesa-hint { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: oklch(55.4% .041 257); transition: color 180ms cubic-bezier(.23,1,.32,1); } .ds-card-mesa-hint svg { transition: transform 180ms cubic-bezier(.23,1,.32,1); } @media (hover: hover) and (pointer: fine) { .ds-card-mesa:hover { background: oklch(97.7% .005 256); border-color: oklch(86.8% .014 256); } .ds-card-mesa:hover .ds-card-mesa-tile { background: oklch(93.8% .028 256); border-color: oklch(84% .06 256); color: oklch(54.6% .215 263); } .ds-card-mesa:hover .ds-card-mesa-hint { color: oklch(54.6% .215 263); } .ds-card-mesa:hover .ds-card-mesa-hint svg { transform: translateX(2px); } } .ds-card-mesa:active { transform: scale(.985); } .ds-card-mesa:focus-visible { outline: 2.5px solid oklch(62.3% .188 260); outline-offset: 2px; }"
+    },
+    {
+      "name": "Card de mesa (ocupada)",
+      "kind": "card",
+      "refersTo": "card-mesa-ocupada",
+      "description": "Misma estructura, tinte rojo apenas perceptible, tiempo transcurrido y acción de liberar en el pie.",
+      "html": "<div class=\"ds-card-mesa-occ\" role=\"button\" tabindex=\"0\" aria-label=\"Mesa 1, ocupada\"><div class=\"ds-card-mesa-top\"><span class=\"ds-card-mesa-tile-occ\">1</span><span class=\"ds-card-mesa-state-occ\"><span class=\"ds-card-mesa-dot-occ\"></span>Ocupada</span></div><div class=\"ds-card-mesa-body\"><div class=\"ds-card-mesa-name\">Mesa 1</div><div class=\"ds-card-mesa-meta\">2 personas</div></div><div class=\"ds-card-mesa-foot\"><span class=\"ds-card-mesa-time\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg>42 min</span><button class=\"ds-btn-liberar\">Liberar</button></div></div>",
+      "css": ".ds-card-mesa-occ { display: flex; flex-direction: column; width: 210px; min-height: 152px; padding: 14px 14px 12px; background: #fffafa; border: 1px solid #f3d7d7; border-radius: 14px; cursor: pointer; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; color: oklch(27.9% .037 260); transition: background-color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-card-mesa-tile-occ { display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 11px; background: #fef2f2; border: 1px solid #fcdada; color: oklch(57.7% .215 27); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; } .ds-card-mesa-state-occ { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; color: oklch(57.7% .215 27); } .ds-card-mesa-dot-occ { width: 7px; height: 7px; border-radius: 50%; background: oklch(63.7% .208 25); } .ds-card-mesa-time { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: oklch(55.4% .041 257); font-variant-numeric: tabular-nums; } .ds-card-mesa-time svg { opacity: .65; } .ds-btn-liberar { display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; background: transparent; border: 1px solid #f2d9d9; border-radius: 8px; color: #b91c1c; font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; transition: background-color 150ms cubic-bezier(.23,1,.32,1), border-color 150ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-btn-liberar:hover { background: #fef2f2; border-color: #eab6b6; } .ds-btn-liberar:active { transform: scale(.95); } .ds-card-mesa-occ:active { transform: scale(.985); }"
+    },
+    {
+      "name": "Campo de formulario",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Campo de texto con borde de 1px y anillo de foco azul al 18%.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Nombre del producto</span><input class=\"ds-input\" type=\"text\" value=\"Cerveza Nacional\" placeholder=\"Ej: Cerveza Nacional\"></label>",
+      "css": ".ds-field { display: block; width: 280px; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; } .ds-field-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: oklch(55.4% .041 257); } .ds-input { width: 100%; min-height: 42px; padding: 9px 12px; background: oklch(99.4% .002 258); color: oklch(27.9% .037 260); border: 1px solid oklch(86.8% .014 256); border-radius: 9px; font-family: inherit; font-size: 14px; transition: border-color 150ms cubic-bezier(.23,1,.32,1), box-shadow 150ms cubic-bezier(.23,1,.32,1); } .ds-input::placeholder { color: #a3b0c2; } .ds-input:focus { outline: none; border-color: oklch(62.3% .188 260); box-shadow: 0 0 0 3px oklch(62.3% .188 260 / .18); }"
+    },
+    {
+      "name": "Select con chevron propio",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Select nativo con appearance:none y chevron SVG embebido. Requiere img-src 'self' data: en el CSP.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Tipo</span><select class=\"ds-select\"><option>Bebida</option><option>Boquita</option><option>Comida</option></select></label>",
+      "css": ".ds-select { width: 100%; min-height: 42px; padding: 9px 34px 9px 12px; background-color: oklch(99.4% .002 258); background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\"); background-repeat: no-repeat; background-position: right 10px center; appearance: none; color: oklch(27.9% .037 260); border: 1px solid oklch(86.8% .014 256); border-radius: 9px; font-family: inherit; font-size: 14px; cursor: pointer; transition: border-color 150ms cubic-bezier(.23,1,.32,1), box-shadow 150ms cubic-bezier(.23,1,.32,1); } .ds-select:focus { outline: none; border-color: oklch(62.3% .188 260); box-shadow: 0 0 0 3px oklch(62.3% .188 260 / .18); }"
+    },
+    {
+      "name": "Pastilla de categoría",
+      "kind": "chip",
+      "refersTo": "chip-categoria",
+      "description": "Filtro del menú de productos. La activa se rellena de azul; las categorías concretas usan un escalón más chico.",
+      "html": "<div class=\"ds-chip-row\"><button class=\"ds-chip ds-chip-active\">Todos</button><button class=\"ds-chip\">Bebidas</button><button class=\"ds-chip\">Boquitas</button><button class=\"ds-chip ds-chip-sub\">Cervezas</button></div>",
+      "css": ".ds-chip-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } .ds-chip { min-height: 40px; padding: 6px 16px; background: oklch(99.4% .002 258); border: 1px solid oklch(86.8% .014 256); border-radius: 20px; color: oklch(55.4% .041 257); font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: border-color 180ms cubic-bezier(.23,1,.32,1), color 180ms cubic-bezier(.23,1,.32,1), background-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-chip:hover { border-color: oklch(62.3% .188 260); color: oklch(54.6% .215 263); background: oklch(93.8% .028 256); } .ds-chip:active { transform: scale(.97); } .ds-chip-active { background: oklch(62.3% .188 260); border-color: oklch(62.3% .188 260); color: oklch(99.4% .002 258); } .ds-chip-sub { min-height: 34px; padding: 5px 13px; font-size: 11.5px; background: oklch(97.7% .005 256); border-color: oklch(92.5% .008 258); }"
+    },
+    {
+      "name": "Ítem de navegación",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Pastilla sobre el panel navy. El estado activo es relleno azul al 22% con borde claro, nunca una franja lateral.",
+      "html": "<nav class=\"ds-nav\"><button class=\"ds-nav-item ds-nav-item-active\"><span class=\"ds-nav-ico\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"3\" width=\"7.5\" height=\"7.5\" rx=\"2\"/><rect x=\"13.5\" y=\"3\" width=\"7.5\" height=\"7.5\" rx=\"2\"/><rect x=\"3\" y=\"13.5\" width=\"7.5\" height=\"7.5\" rx=\"2\"/><rect x=\"13.5\" y=\"13.5\" width=\"7.5\" height=\"7.5\" rx=\"2\"/></svg></span><span>Mesas</span></button><button class=\"ds-nav-item\"><span class=\"ds-nav-ico\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 3v18l2.5-1.5L9 21l2.5-1.5L14 21l2.5-1.5L19 21V3l-2.5 1.5L14 3l-2.5 1.5L9 3 6.5 4.5Z\"/><path d=\"M8.5 9h7\"/><path d=\"M8.5 13h4.5\"/></svg></span><span>Historial</span></button></nav>",
+      "css": ".ds-nav { width: 220px; padding: 12px 0; background: oklch(31.8% .089 262); font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; } .ds-nav-item { display: flex; align-items: center; gap: 10px; width: calc(100% - 20px); margin: 2px 10px; padding: 11px 14px; background: none; border: 1px solid transparent; border-radius: 10px; color: rgba(255,255,255,.62); font-family: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; transition: background-color 180ms cubic-bezier(.23,1,.32,1), color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-nav-ico { display: inline-flex; align-items: center; justify-content: center; width: 22px; opacity: .85; } .ds-nav-item:hover { background: rgba(255,255,255,.07); color: #fff; } .ds-nav-item:active { transform: scale(.98); } .ds-nav-item-active { background: rgba(59,130,246,.22); border-color: rgba(147,197,253,.28); color: #fff; font-weight: 600; } .ds-nav-item-active .ds-nav-ico { opacity: 1; }"
+    },
+    {
+      "name": "Toast",
+      "kind": "custom",
+      "refersTo": "button-primary",
+      "description": "Confirmación efímera con icono según tipo. Entra desde la derecha con escala 0.97, nunca desde 0.",
+      "html": "<div class=\"ds-toast ds-toast-success\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg><span>Mesa liberada</span></div>",
+      "css": ".ds-toast { display: flex; align-items: center; gap: 9px; max-width: 340px; padding: 12px 18px; border-radius: 10px; color: #fff; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 13.5px; font-weight: 600; box-shadow: 0 20px 45px -18px oklch(27.9% .037 260 / .35); animation: ds-toast-in 240ms cubic-bezier(.23,1,.32,1); } .ds-toast svg { opacity: .9; flex-shrink: 0; } .ds-toast-success { background: oklch(62.7% .170 149); } @keyframes ds-toast-in { from { transform: translateX(24px) scale(.97); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }"
+    },
+    {
+      "name": "Botón COBRAR",
+      "kind": "button",
+      "refersTo": "button-cobrar",
+      "description": "El final del flujo. La única pieza donde el color ocupa una superficie grande.",
+      "html": "<button class=\"ds-btn-cobrar\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"20\" height=\"14\" x=\"2\" y=\"5\" rx=\"2\"/><line x1=\"2\" x2=\"22\" y1=\"10\" y2=\"10\"/></svg>COBRAR</button>",
+      "css": ".ds-btn-cobrar { display: flex; align-items: center; justify-content: center; gap: 8px; width: 280px; min-height: 52px; padding: 15px; background: oklch(72.3% .192 150); color: #fff; border: none; border-radius: 10px; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 16px; font-weight: 700; letter-spacing: .3px; cursor: pointer; transition: background-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-btn-cobrar:hover { background: oklch(62.7% .170 149); } .ds-btn-cobrar:active { transform: scale(.985); } .ds-btn-cobrar:disabled { background: oklch(86.8% .014 256); color: oklch(55.4% .041 257); cursor: not-allowed; transform: none; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Turno de Noche",
+    "overview": "El sistema está calibrado para un local a media luz a las nueve de la noche. Nada deslumbra: no hay blanco puro en ninguna superficie, no hay negro puro en ningún texto. Todo neutro lleva un matiz del azul de marca (hue 258), de modo que la pantalla se lee como un objeto de un solo material y no como una hoja de papel de oficina pegada en una pared oscura. Los números —totales, cantidades, minutos transcurridos— llevan cifras tabulares y peso suficiente para leerse a un brazo de distancia, porque el mesero mira la tablet de reojo mientras camina.\n\nLa densidad es de herramienta, no de escaparate. Las mesas caben en una grilla de un vistazo, las tablas de administración corren largas sin aire desperdiciado, y el panel de la orden es una lista plana de filas, no una pila de tarjetas. La jerarquía se construye con escala y peso tipográfico, no con color: el color trabaja poco y por eso significa algo cuando aparece.\n\nEl sistema rechaza explícitamente lo que PRODUCT.md nombra como anti-referentes: el POS viejo tipo Windows XP, la landing de SaaS genérica, la app de delivery colorida y el dashboard sobrecargado.",
+    "keyCharacteristics": [
+      "Paleta en OKLCH, sin #fff ni #000 en ningún lado",
+      "Un solo acento azul; verde y rojo son semánticos, jamás decorativos",
+      "Superficies planas separadas por tono y borde de 1px, no por sombra",
+      "Objetivos táctiles de 44px como piso; el hover nunca es el único camino",
+      "Iconografía SVG de trazo, 24×24, currentColor, un solo set en toda la app",
+      "Movimiento por debajo de 250ms, con curvas propias, y solo cuando comunica estado"
+    ],
+    "rules": [
+      { "name": "La Regla del Matiz", "body": "Ningún neutro es neutro. Todo gris, blanco o casi-negro lleva croma entre 0.002 y 0.041 en hue 255-262. #ffffff, #000000 y cualquier gris puro están prohibidos.", "section": "colors" },
+      { "name": "La Regla de la Voz Única", "body": "El azul es el único acento. Verde significa cobrado, rojo significa ocupado o destructivo. Un cuarto color en la interfaz es un error, no una decisión.", "section": "colors" },
+      { "name": "La Regla del Color Acompañado", "body": "El color nunca porta el significado solo. Libre/Ocupada lleva punto de color y palabra.", "section": "colors" },
+      { "name": "La Regla de la Cifra Tabular", "body": "Todo número que cambie en el tiempo o se alinee en columna lleva font-variant-numeric: tabular-nums.", "section": "typography" },
+      { "name": "La Regla del Peso Antes que el Color", "body": "Para destacar algo, primero se sube el peso o la escala. El color es el último recurso.", "section": "typography" },
+      { "name": "La Regla de lo Plano", "body": "Si un elemento vive dentro del flujo de la página, no lleva sombra. Nunca. Si necesita destacarse, se cambia el tono de su superficie o el peso de su borde.", "section": "elevation" },
+      { "name": "La Regla del Hover Tonal", "body": "El hover no levanta ni proyecta: tiñe. El único desplazamiento permitido es la escala al presionar.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do usar OKLCH para todo color nuevo, con croma bajo cuando la luminosidad se acerca a los extremos.",
+      "Do tintar cada neutro hacia hue 255-262, aunque sea con croma 0.002.",
+      "Do dar :active { transform: scale(0.97) } a todo lo que se pueda presionar.",
+      "Do encerrar todo hover que mueva o levante en @media (hover: hover) and (pointer: fine).",
+      "Do mantener las transiciones por debajo de 250ms y usar --ease-out: cubic-bezier(.23, 1, .32, 1).",
+      "Do declarar las propiedades exactas en cada transition.",
+      "Do acompañar todo estado de color con texto.",
+      "Do usar SVG de trazo 24×24 con currentColor para cualquier icono nuevo.",
+      "Do aplicar tabular-nums a todo número que se actualice o se alinee.",
+      "Do mantener 44×44px de área táctil en cualquier control que se use durante el servicio."
+    ],
+    "donts": [
+      "Don't usar border-left o border-right mayor a 1px como franja de color en tarjetas, filas o alertas.",
+      "Don't poner sombra en nada que viva dentro del flujo de la página.",
+      "Don't escribir #ffffff, #000000 ni ningún gris sin matiz.",
+      "Don't introducir un cuarto color.",
+      "Don't usar transition: all.",
+      "Don't animar desde scale(0).",
+      "Don't usar ease-in en interfaz.",
+      "Don't coreografiar la carga de una vista.",
+      "Don't usar emojis como iconos.",
+      "Don't anidar tarjetas.",
+      "Don't caer en el POS viejo tipo Windows XP.",
+      "Don't caer en la landing de SaaS genérica.",
+      "Don't caer en la app de delivery colorida.",
+      "Don't llenar el historial de gráficas que nadie mira."
+    ]
+  }
+}

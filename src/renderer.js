@@ -156,54 +156,127 @@ async function refreshTables() {
   renderTables();
 }
 
+// ── Set de iconos (trazo Lucide, 24×24, currentColor) ─────────────────────────
+const ICON_PATHS = {
+  users:    '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  user:     '<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  clock:    '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  arrow:    '<path d="M5 12h13"/><path d="m12 5 7 7-7 7"/>',
+  back:     '<path d="M19 12H5"/><path d="m12 19-7-7 7-7"/>',
+  chevron:  '<path d="m6 9 6 6 6-6"/>',
+  plus:     '<path d="M12 5v14"/><path d="M5 12h14"/>',
+  minus:    '<path d="M5 12h14"/>',
+  pencil:   '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  trash:    '<path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6"/><path d="M14 11v6"/>',
+  search:   '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  x:        '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+  logout:   '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>',
+  chart:    '<path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
+  check:    '<path d="M20 6 9 17l-5-5"/>',
+  alert:    '<path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/>',
+  info:     '<circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><path d="M12 8h.01"/>',
+  table:    '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/>',
+  receipt:  '<path d="M4 3v18l2.5-1.5L9 21l2.5-1.5L14 21l2.5-1.5L19 21V3l-2.5 1.5L14 3l-2.5 1.5L9 3 6.5 4.5Z"/><path d="M8 9h8"/><path d="M8 13h5"/>'
+};
+
+function icon(name, size = 14, cls = '') {
+  const p = ICON_PATHS[name];
+  if (!p) return '';
+  return `<svg class="ico ${cls}" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+}
+
+// Filtro activo de la vista de mesas: 'all' | 'libre' | 'ocupada'
+let tableFilter = 'all';
+
+function setTableFilter(value, btn) {
+  tableFilter = value;
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderTables();
+}
+
+// "hace X" desde la apertura de la orden
+function elapsedLabel(iso) {
+  if (!iso) return '—';
+  const mins = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 60000));
+  if (mins < 1)  return 'recién';
+  if (mins < 60) return `${mins} min`;
+  return `${Math.floor(mins / 60)} h ${mins % 60} min`;
+}
+
 function renderTables() {
   const grid = document.getElementById('tables-grid');
-  if (!State.tables.length) {
-    grid.innerHTML = '<p style="color:#94a3b8;padding:20px">No hay mesas configuradas.</p>';
+  if (!grid) return;
+
+  const all      = State.tables;
+  const ocupadas = all.filter(t => t.status === 'ocupada').length;
+  const libres   = all.length - ocupadas;
+
+  // Contadores de cabecera
+  const setTxt = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setTxt('cnt-all', all.length);
+  setTxt('cnt-libre', libres);
+  setTxt('cnt-ocupada', ocupadas);
+  setTxt('tables-subtitle', all.length
+    ? `${all.length} espacios · ${libres} disponibles · ${ocupadas} en servicio`
+    : 'Sin espacios configurados');
+
+  const list = tableFilter === 'all' ? all : all.filter(t => t.status === tableFilter);
+
+  if (!list.length) {
+    const msg = !all.length            ? 'No hay mesas configuradas.'
+              : tableFilter === 'libre' ? 'Todas las mesas están ocupadas.'
+              :                           'No hay mesas ocupadas.';
+    grid.innerHTML = `<div class="tables-empty">${icon('table', 46)}<p>${msg}</p></div>`;
     return;
   }
 
-  grid.innerHTML = State.tables.map(t => {
+  grid.innerHTML = list.map(t => {
     const isOcupada = t.status === 'ocupada';
     const n = t.name.toLowerCase();
-    let iconHtml;
-    const color   = isOcupada ? '#ef4444' : '#3b82f6';
-    const colorBg = isOcupada ? '#fee2e2' : '#dbeafe';
-    const colorLt = isOcupada ? '#fca5a5' : '#93c5fd';
-    if (n.includes('barra')) {
-      iconHtml = `<span class="card-icon">🍺</span>`;
-    } else if (n.includes('terraza')) {
-      iconHtml = `<span class="card-icon">🌿</span>`;
-    } else {
-      const num = (t.name.match(/\d+/) || [''])[0] || t.name.charAt(0).toUpperCase();
-      // Mesa cuadrada con sillas — vista superior SVG
-      iconHtml = `
-        <svg class="tbl-svg" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-          <!-- silla arriba -->
-          <rect x="18" y="3"  width="24" height="10" rx="3" fill="${colorLt}"/>
-          <!-- silla abajo -->
-          <rect x="18" y="47" width="24" height="10" rx="3" fill="${colorLt}"/>
-          <!-- silla izquierda -->
-          <rect x="3"  y="18" width="10" height="24" rx="3" fill="${colorLt}"/>
-          <!-- silla derecha -->
-          <rect x="47" y="18" width="10" height="24" rx="3" fill="${colorLt}"/>
-          <!-- superficie de la mesa -->
-          <rect x="13" y="13" width="34" height="34" rx="6" fill="${colorBg}" stroke="${color}" stroke-width="2.5"/>
-          <!-- número -->
-          <text x="30" y="35" text-anchor="middle" font-size="16" font-weight="900"
-                font-family="Segoe UI,system-ui,sans-serif" fill="${color}">${num}</text>
-        </svg>`;
-    }
+
+    // Glifo: número de mesa, o inicial para barra/terraza
+    let glyph;
+    if (n.includes('barra'))        glyph = 'B';
+    else if (n.includes('terraza')) glyph = 'T';
+    else glyph = (t.name.match(/\d+/) || [''])[0] || t.name.charAt(0).toUpperCase();
+
+    const order = isOcupada ? State.openOrders.find(o => o.table_id === t.id) : null;
+
+    const foot = isOcupada
+      ? `<div class="tc-foot">
+           <span class="tc-time">${icon('clock', 13)}${esc(elapsedLabel(order && order.created_at))}</span>
+           <button class="tc-free" onclick="event.stopPropagation(); confirmarLiberarMesa(${t.id})"
+                   aria-label="Liberar ${esc(t.name)}">Liberar</button>
+         </div>`
+      : `<div class="tc-foot">
+           <span class="tc-hint">Abrir orden ${icon('arrow', 13)}</span>
+         </div>`;
+
     return `
-      <div class="table-card ${t.status}" onclick="openTable(${t.id})">
-        ${iconHtml}
-        <div class="card-name">${esc(t.name)}</div>
-        <div class="card-cap">👥 ${t.capacity} personas</div>
-        <span class="card-status">${isOcupada ? 'Ocupada' : 'Libre'}</span>
-        ${isOcupada ? `<button class="btn-liberar-card" onclick="event.stopPropagation(); confirmarLiberarMesa(${t.id})">🔓 Liberar</button>` : ''}
+      <div class="table-card ${t.status}" role="button" tabindex="0"
+           aria-label="${esc(t.name)}, ${isOcupada ? 'ocupada' : 'libre'}"
+           onclick="openTable(${t.id})"
+           onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();openTable(${t.id});}">
+        <div class="tc-top">
+          <span class="tc-tile">${esc(glyph)}</span>
+          <span class="tc-state"><span class="tc-dot" aria-hidden="true"></span>${isOcupada ? 'Ocupada' : 'Libre'}</span>
+        </div>
+        <div class="tc-body">
+          <div class="tc-name" title="${esc(t.name)}">${esc(t.name)}</div>
+          <div class="tc-meta">${icon('users', 13)}${t.capacity} personas</div>
+        </div>
+        ${foot}
       </div>`;
   }).join('');
 }
+
+// Refresca los tiempos transcurridos mientras la vista de mesas esté visible
+setInterval(() => {
+  const view = document.getElementById('view-tables');
+  if (view && view.classList.contains('active') && State.tables.length) renderTables();
+}, 60000);
 
 async function openTable(tableId) {
   // ¿hay orden abierta?
@@ -241,7 +314,7 @@ function confirmarLiberarMesa(tableId) {
   const order = State.openOrders.find(o => o.table_id === tableId);
   if (!order) { showToast('No se encontró la orden abierta', 'error'); return; }
   const hasItems = /* comprobamos en la orden actual */ true;
-  document.getElementById('confirm-title').textContent   = '🔓 Liberar Mesa';
+  document.getElementById('confirm-title').textContent   = 'Liberar Mesa';
   document.getElementById('confirm-message').textContent =
     'Se cancelará la orden de esta mesa y quedará libre. ¿Continuar?';
   const btn = document.getElementById('btn-confirm-ok');
@@ -256,7 +329,7 @@ function confirmarLiberarMesa(tableId) {
 }
 
 function confirmarLiberarDesdeOrden() {
-  document.getElementById('confirm-title').textContent   = '🔓 Liberar Mesa';
+  document.getElementById('confirm-title').textContent   = 'Liberar Mesa';
   document.getElementById('confirm-message').textContent =
     'Se cancelará esta orden y la mesa quedará libre. Los ítems no cobrados se perderán.';
   const btn = document.getElementById('btn-confirm-ok');
@@ -313,11 +386,11 @@ function renderOrderItems(items, total) {
         <div class="qty-controls">
           <button class="qty-btn remove"
                   onclick="changeItemQty(${item.id}, ${item.quantity - 1})"
-                  title="Reducir">−</button>
+                  title="Reducir" aria-label="Reducir cantidad">${icon(item.quantity > 1 ? 'minus' : 'trash', 14)}</button>
           <span class="qty-num">${item.quantity}</span>
           <button class="qty-btn"
                   onclick="changeItemQty(${item.id}, ${item.quantity + 1})"
-                  title="Aumentar">+</button>
+                  title="Aumentar" aria-label="Aumentar cantidad">${icon('plus', 14)}</button>
         </div>
         <span class="item-subtotal">${fmt(item.unit_price * item.quantity)}</span>
       </div>
@@ -336,7 +409,7 @@ function buildMenuFilters() {
   const bar = document.getElementById('menu-filter-bar');
 
   // Obtener tipos únicos
-  const typeLabels = { bebida: '🍹 Bebidas', boquita: '🥨 Boquitas', comida: '🍽️ Comida' };
+  const typeLabels = { bebida: 'Bebidas', boquita: 'Boquitas', comida: 'Comida' };
   const types = [...new Set(State.categories.map(c => c.type))];
 
   bar.innerHTML =
@@ -348,9 +421,8 @@ function buildMenuFilters() {
         ${typeLabels[type] || type}
       </button>`).join('') +
     State.categories.map(cat => `
-      <button class="cat-filter-btn ${State.categoryFilter === 'cat_' + cat.id ? 'active' : ''}"
-              onclick="filterMenu('cat_${cat.id}', this)"
-              style="font-size:11px">
+      <button class="cat-filter-btn cat-sub ${State.categoryFilter === 'cat_' + cat.id ? 'active' : ''}"
+              onclick="filterMenu('cat_${cat.id}', this)">
         ${esc(cat.name)}
       </button>`).join('');
 }
@@ -376,7 +448,7 @@ function renderMenuProducts() {
   }
 
   if (!filtered.length) {
-    grid.innerHTML = '<p style="color:#94a3b8;padding:20px;grid-column:1/-1">Sin productos en esta categoría.</p>';
+    grid.innerHTML = `<div class="menu-empty">${icon('table', 34)}<p>Sin productos en esta categoría.</p></div>`;
     return;
   }
 
@@ -395,7 +467,10 @@ async function addProductToOrder(productId) {
 
 // ── Cobrar ────────────────────────────────────────────────────────────────────
 async function cobrarOrden() {
+  const btn = document.getElementById('btn-cobrar');
+  btn.disabled = true;
   const order = await window.api.orders.get(State.currentOrderId);
+  btn.disabled = false;
   if (!order || !order.items.length) {
     showToast('La orden está vacía', 'error'); return;
   }
@@ -415,7 +490,7 @@ function showReceipt(order) {
 
   el.innerHTML = `
     <div class="receipt-header">
-      <h2>🍹 LA TABERNA</h2>
+      <h2>LA TABERNA</h2>
       <p>Barra y Restaurante · Powered by El Primo</p>
     </div>
     <hr class="receipt-divider">
@@ -447,10 +522,17 @@ function showReceipt(order) {
 }
 
 async function confirmPayment() {
+  const btn = document.getElementById('btn-confirm-payment');
+  if (btn.disabled) return;
+  btn.disabled = true;
   const res = await window.api.orders.close(State.currentOrderId);
-  if (!res.success) { showToast(res.error || 'Error al cerrar orden', 'error'); return; }
+  if (!res.success) {
+    btn.disabled = false;
+    showToast(res.error || 'Error al cerrar orden', 'error'); return;
+  }
 
   closeModal('modal-receipt');
+  btn.disabled = false;
   showToast('Orden cobrada correctamente', 'success');
   State.currentOrderId = null;
   State.categoryFilter = null;
@@ -482,7 +564,7 @@ function renderHistory(orders) {
       <div class="hist-stat-value">${fmt(totalAmount)}</div>
       <div class="hist-stat-label">Total recaudado</div>
     </div>
-    ${orders.length ? `<button class="btn btn-outline hist-corte-btn" onclick="showCorte()">📊 Ver Corte</button>` : ''}`;
+    ${orders.length ? `<button class="btn btn-outline hist-corte-btn" onclick="showCorte()">${icon('chart', 15)}Ver Corte</button>` : ''}`;
 
   const listEl = document.getElementById('history-list');
   if (!orders.length) {
@@ -498,16 +580,17 @@ function renderHistory(orders) {
         <div class="hist-order-meta">
           <span class="hist-order-num">#${o.id}</span>
           <span class="hist-order-table">${esc(o.table_name)}</span>
-          <span class="hist-order-user">👤 ${esc(o.user_name)}</span>
+          <span class="hist-order-user">${icon('user', 13)}${esc(o.user_name)}</span>
         </div>
         <div class="hist-order-right">
           <span class="hist-order-datetime">
             <span class="hist-date">${datePart}</span>
-            <span class="hist-time">🕐 ${timePart}</span>
+            <span class="hist-time">${icon('clock', 12)}${timePart}</span>
           </span>
           <span class="hist-order-total">${fmt(o.total)}</span>
-          <button class="hist-del-btn" onclick="event.stopPropagation(); deleteFromHistory(${o.id}, '#${o.id} ${esc(o.table_name)}')" title="Eliminar">🗑</button>
-          <span class="hist-chevron" id="hist-chev-${o.id}">▼</span>
+          <button class="hist-del-btn" onclick="event.stopPropagation(); deleteFromHistory(${o.id}, '#${o.id} ${esc(o.table_name)}')"
+                  title="Eliminar" aria-label="Eliminar orden #${o.id}">${icon('trash', 15)}</button>
+          <span class="hist-chevron" id="hist-chev-${o.id}">${icon('chevron', 16)}</span>
         </div>
       </div>
       <div class="hist-order-items" id="hist-items-${o.id}">
@@ -626,7 +709,7 @@ function toggleCorteMesa(id) {
   const panel = document.getElementById(`cmt-orders-${id}`);
   const chev  = document.getElementById(`cmt-chev-${id}`);
   const open  = panel.classList.toggle('open');
-  chev.textContent = open ? '▲' : '▼';
+  chev.classList.toggle('open', open);
 }
 
 function buildCorteMesas(orders) {
@@ -693,7 +776,7 @@ function buildCorteMesas(orders) {
             <div class="cmt-card-meta">
               <span>${d.orders.length} orden${d.orders.length !== 1 ? 'es' : ''}</span>
               <span class="cmt-card-total">${fmt(d.total)}</span>
-              <span id="cmt-chev-${safeId}" class="cmt-chev">▼</span>
+              <span id="cmt-chev-${safeId}" class="cmt-chev">${icon('chevron', 16)}</span>
             </div>
           </div>
           <div id="cmt-orders-${safeId}" class="cmt-orders-panel">
@@ -792,7 +875,7 @@ function toggleHistOrder(id) {
   const itemsEl = document.getElementById(`hist-items-${id}`);
   const chevEl  = document.getElementById(`hist-chev-${id}`);
   const open    = itemsEl.classList.toggle('open');
-  chevEl.textContent = open ? '▲' : '▼';
+  chevEl.classList.toggle('open', open);
 }
 
 function clearHistoryFilters() {
@@ -848,7 +931,7 @@ function renderProductsTable() {
   const tbody = document.getElementById('products-tbody');
 
   if (!list.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#94a3b8;padding:24px">Sin productos</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="td-empty">Sin productos</td></tr>';
     return;
   }
 
@@ -861,9 +944,9 @@ function renderProductsTable() {
       <td>${p.available
         ? '<span class="badge badge-active">Sí</span>'
         : '<span class="badge badge-inactive">No</span>'}</td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-outline btn-sm" onclick="openProductModal(${p.id})">Editar</button>
-        <button class="btn btn-danger btn-sm"  onclick="confirmDelete('producto', ${p.id}, '${esc(p.name)}')">Eliminar</button>
+      <td class="row-actions">
+        <button class="btn btn-outline btn-sm" onclick="openProductModal(${p.id})">${icon('pencil', 13)}Editar</button>
+        <button class="btn btn-ghost-danger btn-sm" onclick="confirmDelete('producto', ${p.id}, '${esc(p.name)}')">${icon('trash', 13)}Eliminar</button>
       </td>
     </tr>`).join('');
 }
@@ -926,7 +1009,7 @@ async function loadAdminTables() {
 function renderAdminTables() {
   const tbody = document.getElementById('tables-admin-tbody');
   if (!State.tables.length) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:24px">Sin mesas</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="td-empty">Sin mesas</td></tr>';
     return;
   }
   tbody.innerHTML = State.tables.map(t => `
@@ -934,10 +1017,10 @@ function renderAdminTables() {
       <td><b>${esc(t.name)}</b></td>
       <td>${t.capacity} personas</td>
       <td><span class="badge badge-${t.status}">${t.status === 'libre' ? 'Libre' : 'Ocupada'}</span></td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-outline btn-sm" onclick="openTableModal(${t.id})">Editar</button>
-        <button class="btn btn-danger btn-sm"  onclick="confirmDelete('mesa', ${t.id}, '${esc(t.name)}')"
-                ${t.status === 'ocupada' ? 'disabled title="Mesa ocupada"' : ''}>Eliminar</button>
+      <td class="row-actions">
+        <button class="btn btn-outline btn-sm" onclick="openTableModal(${t.id})">${icon('pencil', 13)}Editar</button>
+        <button class="btn btn-ghost-danger btn-sm" onclick="confirmDelete('mesa', ${t.id}, '${esc(t.name)}')"
+                ${t.status === 'ocupada' ? 'disabled title="Mesa ocupada"' : ''}>${icon('trash', 13)}Eliminar</button>
       </td>
     </tr>`).join('');
 }
@@ -982,7 +1065,7 @@ async function loadAdminUsers() {
 function renderUsersTable(users) {
   const tbody = document.getElementById('users-tbody');
   if (!users.length) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px">Sin usuarios</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="td-empty">Sin usuarios</td></tr>';
     return;
   }
   tbody.innerHTML = users.map(u => `
@@ -991,11 +1074,11 @@ function renderUsersTable(users) {
       <td>${esc(u.full_name)}</td>
       <td><span class="badge badge-${u.role}">${u.role === 'admin' ? 'Admin' : 'Mesero'}</span></td>
       <td><span class="badge badge-${u.active ? 'active' : 'inactive'}">${u.active ? 'Activo' : 'Inactivo'}</span></td>
-      <td style="white-space:nowrap">
-        <button class="btn btn-outline btn-sm" onclick="openUserModal(${u.id})">Editar</button>
+      <td class="row-actions">
+        <button class="btn btn-outline btn-sm" onclick="openUserModal(${u.id})">${icon('pencil', 13)}Editar</button>
         ${u.id === State.user.id
-          ? '<span style="font-size:11px;color:#94a3b8">Tu cuenta</span>'
-          : `<button class="btn btn-danger btn-sm" onclick="confirmDelete('usuario', ${u.id}, '${esc(u.username)}')">Eliminar</button>`
+          ? '<span class="row-note">Tu cuenta</span>'
+          : `<button class="btn btn-ghost-danger btn-sm" onclick="confirmDelete('usuario', ${u.id}, '${esc(u.username)}')">${icon('trash', 13)}Eliminar</button>`
         }
       </td>
     </tr>`).join('');
@@ -1117,7 +1200,9 @@ function showToast(msg, type = 'info') {
   const container = document.getElementById('toast-container');
   const el = document.createElement('div');
   el.className = `toast ${type}`;
-  el.textContent = msg;
+  const glyph = { success: 'check', error: 'alert', info: 'info' }[type] || 'info';
+  el.innerHTML = `${icon(glyph, 16)}<span></span>`;
+  el.querySelector('span').textContent = msg;
   container.appendChild(el);
   setTimeout(() => el.remove(), 3200);
 }
