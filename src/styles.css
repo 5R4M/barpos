@@ -211,8 +211,9 @@ select:focus-visible,
 }
 .nav-btn.active .nav-icon { opacity: 1; }
 
-/* ── Menú árbol de administración ────────────────────────── */
-.nav-tree { display: none; } /* JS lo muestra solo para admin */
+/* ── Menús árbol (historial y administración) ────────────── */
+.nav-tree { display: none; }      /* el árbol admin lo muestra el JS según rol */
+.nav-tree.show { display: block; } /* el árbol de historial siempre visible */
 
 .nav-tree-parent {
   width: 100%;
@@ -688,11 +689,59 @@ select:focus-visible,
   flex: 1;
   overflow-y: auto;
   padding: 16px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ── Menú agrupado por categoría ─────────────────────────── */
+.menu-cat-section { display: flex; flex-direction: column; gap: 10px; }
+
+.menu-cat-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 4px 2px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--line);
+  transition: border-color var(--dur) var(--ease-out);
+}
+.menu-cat-header:hover { border-color: var(--line-strong); }
+.menu-cat-toggle {
+  display: inline-flex;
+  color: var(--muted);
+}
+.menu-cat-toggle svg { transition: transform var(--dur) var(--ease-out); transform: rotate(-90deg); }
+.menu-cat-toggle.open svg { transform: rotate(0deg); }
+.menu-cat-name {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+.menu-cat-count {
+  margin-left: auto;
+  min-width: 22px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.menu-cat-grid {
+  display: none;
   grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
   gap: 10px;
   align-content: start;
 }
+.menu-cat-grid.open { display: grid; }
 
 .product-card {
   display: flex;
@@ -1734,4 +1783,168 @@ select:focus-visible,
   .corte-tabs    { display: none; }
   .corte-tab-panel { display: block !important; }
   .cmt-orders-panel { max-height: none !important; overflow: visible; }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   HISTORIAL — pestañas y vista de meseros
+═══════════════════════════════════════════════════════════ */
+.hist-tab { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.hist-tab.active { display: flex; }
+
+/* ── Agrupación por categoría en la tabla de productos ───── */
+.cat-group-header {
+  cursor: pointer;
+  user-select: none;
+  background: var(--surface-2);
+}
+.cat-group-header td {
+  padding: 10px 16px !important;
+  border-bottom: 1px solid var(--line);
+}
+.cat-group-header:hover td { background: var(--accent-soft); }
+.cat-group-header .badge { margin: 0 8px 0 6px; }
+.cat-group-toggle {
+  display: inline-flex;
+  vertical-align: -2px;
+  color: var(--muted);
+}
+.cat-group-toggle svg { transition: transform var(--dur) var(--ease-out); transform: rotate(-90deg); }
+.cat-group-toggle.open svg { transform: rotate(0deg); }
+.cat-group-count {
+  margin-left: 10px;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Tarjeta de mesero ───────────────────────────────────── */
+.wh-waiter-card {
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.wh-waiter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--dur) var(--ease-out);
+}
+.wh-waiter-header:hover { background: var(--surface-2); }
+
+.wh-waiter-info { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.wh-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  border: 1px solid oklch(84% .06 256);
+  color: var(--accent-dark);
+  font-size: 15px;
+  font-weight: 700;
+}
+.wh-waiter-name {
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--text);
+  letter-spacing: -.1px;
+}
+.wh-waiter-stats {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.wh-waiter-right { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.wh-waiter-total {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--success-dark);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.3px;
+}
+.wh-chevron { display: inline-flex; color: var(--muted); }
+.wh-chevron svg { transition: transform .22s var(--ease-out); }
+.wh-chevron.open svg { transform: rotate(180deg); }
+
+/* ── Órdenes dentro de la tarjeta ────────────────────────── */
+.wh-orders-list {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .3s var(--ease-out);
+  border-top: 1px solid transparent;
+}
+.wh-orders-list.open {
+  max-height: 1400px;
+  overflow-y: auto;
+  border-top-color: var(--line);
+}
+
+.wh-order-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.wh-order-row:last-child { border-bottom: none; }
+
+.wh-order-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 210px;
+  color: var(--text-light);
+}
+.wh-table-tag {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+.wh-datetime {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.wh-products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+.wh-product-tag {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: 11px;
+  color: var(--text-light);
+  white-space: nowrap;
+}
+
+.wh-order-total {
+  flex-shrink: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }

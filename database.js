@@ -231,14 +231,21 @@ function deleteTable(id) {
 
 // ── Orders ────────────────────────────────────────────────────────────────────
 function getOpenOrders() {
-  const orders = db.get('orders').filter({ status: 'abierta' }).value();
-  const tables = db.get('tables').value();
-  const users  = db.get('users').value();
-  return orders.map(o => ({
-    ...o,
-    table_name: tables.find(t => t.id === o.table_id)?.name  || '?',
-    user_name:  users.find(u => u.id === o.user_id)?.full_name || '?'
-  }));
+  const orders   = db.get('orders').filter({ status: 'abierta' }).value();
+  const tables   = db.get('tables').value();
+  const users    = db.get('users').value();
+  const allItems = db.get('orderItems').value();
+  return orders.map(o => {
+    const items = allItems.filter(i => i.order_id === o.id);
+    const total = items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+    return {
+      ...o,
+      table_name: tables.find(t => t.id === o.table_id)?.name  || '?',
+      user_name:  users.find(u => u.id === o.user_id)?.full_name || '?',
+      item_count: items.reduce((s, i) => s + i.quantity, 0),
+      total
+    };
+  });
 }
 
 function getOrderWithItems(orderId) {
@@ -369,6 +376,51 @@ function getOrderHistory(dateFrom, dateTo) {
   }).value();
 }
 
+// ── Waiter History ────────────────────────────────────────────────────────────
+function getWaiterHistory(dateFrom, dateTo) {
+  const users    = db.get('users').value();
+  const tables   = db.get('tables').value();
+  const products = db.get('products').value();
+  const allItems = db.get('orderItems').value();
+
+  let query = db.get('orders').filter({ status: 'cobrada' });
+  if (dateFrom) query = query.filter(o => (o.closed_at || '') >= dateFrom);
+  if (dateTo)   query = query.filter(o => (o.closed_at || '') <= dateTo + 'T23:59:59.999Z');
+
+  const orders = query.value();
+  const byUser = {};
+
+  for (const o of orders) {
+    if (!byUser[o.user_id]) {
+      const u = users.find(u => u.id === o.user_id);
+      byUser[o.user_id] = {
+        user_id:   o.user_id,
+        user_name: u?.full_name || '?',
+        orders:    [],
+        total:     0,
+        items_qty: 0
+      };
+    }
+    const items = allItems
+      .filter(i => i.order_id === o.id)
+      .map(i => ({
+        ...i,
+        product_name: products.find(p => p.id === i.product_id)?.name || '?'
+      }));
+    const total = items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+    byUser[o.user_id].orders.push({
+      ...o,
+      table_name: tables.find(t => t.id === o.table_id)?.name || '?',
+      items,
+      total
+    });
+    byUser[o.user_id].total     += total;
+    byUser[o.user_id].items_qty += items.reduce((s, i) => s + i.quantity, 0);
+  }
+
+  return Object.values(byUser).sort((a, b) => b.total - a.total);
+}
+
 module.exports = {
   initDB,
   login,
@@ -378,5 +430,5 @@ module.exports = {
   getTables, createTable, updateTable, deleteTable,
   getOpenOrders, getOrderWithItems, createOrder,
   addOrderItem, updateOrderItem, removeOrderItem, closeOrder,
-  cancelOrder, deleteOrder, getOrderHistory
+  cancelOrder, deleteOrder, getOrderHistory, getWaiterHistory
 };

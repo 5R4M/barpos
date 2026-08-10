@@ -51,8 +51,10 @@ async function handleLogin(e) {
 
     // Mostrar/ocultar árbol admin según rol
     const isAdmin = user.role === 'admin';
-    const adminTree = document.getElementById('nav-admin-tree');
-    if (adminTree) adminTree.style.display = isAdmin ? 'block' : 'none';
+    const adminTree   = document.getElementById('nav-admin-tree');
+    const historyTree = document.getElementById('nav-history-tree');
+    if (adminTree)   adminTree.style.display   = isAdmin ? 'block' : 'none';
+    if (historyTree) historyTree.style.display = isAdmin ? 'block' : 'none';
     document.querySelectorAll('.admin-only')
       .forEach(el => el.style.display = isAdmin ? 'inline-flex' : 'none');
 
@@ -82,11 +84,19 @@ function logout() {
   // Ocultar y colapsar árbol admin al cerrar sesión
   const adminTree = document.getElementById('nav-admin-tree');
   if (adminTree) adminTree.style.display = 'none';
+  const historyTreeEl = document.getElementById('nav-history-tree');
+  if (historyTreeEl) historyTreeEl.style.display = 'none';
   const children = document.getElementById('nav-admin-children');
   const chevron  = document.getElementById('nav-admin-chevron');
   if (children) children.classList.remove('open');
   if (chevron)  chevron.classList.remove('open');
   document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+
+  // Colapsar árbol de historial
+  const histChildren = document.getElementById('nav-history-children');
+  const histChevron  = document.getElementById('nav-history-chevron');
+  if (histChildren) histChildren.classList.remove('open');
+  if (histChevron)  histChevron.classList.remove('open');
 
   document.getElementById('login-username').value = '';
   document.getElementById('login-password').value = '';
@@ -125,6 +135,9 @@ const ADMIN_ROUTES = { 'admin-productos': 'productos', 'admin-mesas': 'mesas', '
 const ADMIN_LABELS = { productos: 'Productos', mesas: 'Mesas', usuarios: 'Usuarios' };
 
 function showMainView(name) {
+  // Historial solo para admins
+  if (name === 'history' && State.user && State.user.role !== 'admin') return;
+
   document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 
@@ -419,11 +432,6 @@ function buildMenuFilters() {
       <button class="cat-filter-btn type-${type} ${State.categoryFilter === type ? 'active' : ''}"
               onclick="filterMenu('${type}', this)">
         ${typeLabels[type] || type}
-      </button>`).join('') +
-    State.categories.map(cat => `
-      <button class="cat-filter-btn cat-sub ${State.categoryFilter === 'cat_' + cat.id ? 'active' : ''}"
-              onclick="filterMenu('cat_${cat.id}', this)">
-        ${esc(cat.name)}
       </button>`).join('');
 }
 
@@ -438,13 +446,8 @@ function renderMenuProducts() {
   const grid    = document.getElementById('menu-products-grid');
   let filtered  = State.products.filter(p => p.available);
 
-  if (State.categoryFilter !== null) {
-    if (State.categoryFilter && State.categoryFilter.startsWith('cat_')) {
-      const catId = parseInt(State.categoryFilter.replace('cat_', ''));
-      filtered = filtered.filter(p => p.category_id === catId);
-    } else if (State.categoryFilter) {
-      filtered = filtered.filter(p => p.category_type === State.categoryFilter);
-    }
+  if (State.categoryFilter) {
+    filtered = filtered.filter(p => p.category_type === State.categoryFilter);
   }
 
   if (!filtered.length) {
@@ -452,11 +455,47 @@ function renderMenuProducts() {
     return;
   }
 
-  grid.innerHTML = filtered.map(p => `
-    <div class="product-card" onclick="addProductToOrder(${p.id})">
-      <div class="prod-name">${esc(p.name)}</div>
-      <div class="prod-price">${fmt(p.price)}</div>
-    </div>`).join('');
+  // Agrupar por categoría
+  const groups = {};
+  for (const p of filtered) {
+    if (!groups[p.category_id]) {
+      groups[p.category_id] = { name: p.category_name, type: p.category_type, products: [] };
+    }
+    groups[p.category_id].products.push(p);
+  }
+
+  // Ordenar: tipo (bebida → boquita → comida), luego nombre
+  const typeOrder = { bebida: 0, boquita: 1, comida: 2 };
+  const sorted = Object.entries(groups).sort(([, a], [, b]) =>
+    (typeOrder[a.type] ?? 3) - (typeOrder[b.type] ?? 3) || a.name.localeCompare(b.name)
+  );
+
+  grid.innerHTML = sorted.map(([catId, group]) => {
+    const gId = `mc-${catId}`;
+    return `
+      <div class="menu-cat-section">
+        <div class="menu-cat-header" onclick="toggleMenuCat('${gId}')">
+          <span class="menu-cat-toggle open">${icon('chevron', 15)}</span>
+          <span class="menu-cat-name">${esc(group.name)}</span>
+          <span class="menu-cat-count">${group.products.length}</span>
+        </div>
+        <div class="menu-cat-grid open" id="${gId}">
+          ${group.products.map(p => `
+            <div class="product-card" onclick="addProductToOrder(${p.id})">
+              <div class="prod-name">${esc(p.name)}</div>
+              <div class="prod-price">${fmt(p.price)}</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleMenuCat(gId) {
+  const grid = document.getElementById(gId);
+  if (!grid) return;
+  const isOpen = grid.classList.contains('open');
+  grid.classList.toggle('open', !isOpen);
+  grid.previousElementSibling.querySelector('.menu-cat-toggle').classList.toggle('open', !isOpen);
 }
 
 async function addProductToOrder(productId) {
@@ -891,7 +930,130 @@ function initHistoryView() {
     document.getElementById('hist-date-from').value = today;
     document.getElementById('hist-date-to').value   = today;
   }
+  if (!document.getElementById('wh-date-from').value) {
+    document.getElementById('wh-date-from').value = today;
+    document.getElementById('wh-date-to').value   = today;
+  }
   loadHistory();
+}
+
+// ── Pestañas de Historial (Cobros / Meseros) ─────────────────────────────────
+function toggleHistoryMenu() {
+  const children = document.getElementById('nav-history-children');
+  const chevron  = document.getElementById('nav-history-chevron');
+  const open = children.classList.toggle('open');
+  chevron.classList.toggle('open', open);
+}
+
+function showHistorialTab(tab) {
+  document.querySelectorAll('#nav-history-children .nav-child').forEach(b => b.classList.remove('active'));
+  const navBtn = document.getElementById(`nav-hist-${tab}`);
+  if (navBtn) navBtn.classList.add('active');
+
+  document.querySelectorAll('.hist-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`hist-${tab}-tab`).classList.add('active');
+
+  const titles = {
+    cobros:  ['Historial de Cobros',  'Órdenes cerradas y corte de caja'],
+    meseros: ['Historial de Meseros', 'Ventas y órdenes por mesero']
+  };
+  const [title, sub] = titles[tab];
+  document.getElementById('history-section-title').textContent = title;
+  document.getElementById('history-section-sub').textContent   = sub;
+
+  showMainView('history');
+  if (tab === 'meseros') loadWaiterHistory();
+}
+
+// ── Historial de Meseros ─────────────────────────────────────────────────────
+async function loadWaiterHistory() {
+  const dateFrom = document.getElementById('wh-date-from').value || null;
+  const dateTo   = document.getElementById('wh-date-to').value   || null;
+  const data = await window.api.orders.waiterHistory(dateFrom, dateTo);
+  renderWaiterHistory(data);
+}
+
+function clearWaiterFilters() {
+  document.getElementById('wh-date-from').value = '';
+  document.getElementById('wh-date-to').value   = '';
+  loadWaiterHistory();
+}
+
+function renderWaiterHistory(data) {
+  const summaryEl = document.getElementById('waiter-summary');
+  const listEl    = document.getElementById('waiter-list');
+
+  if (!data.length) {
+    summaryEl.innerHTML = '';
+    listEl.innerHTML = '<p class="hist-empty">No hay datos en el período seleccionado.</p>';
+    return;
+  }
+
+  const grandTotal  = data.reduce((s, w) => s + w.total, 0);
+  const totalOrders = data.reduce((s, w) => s + w.orders.length, 0);
+
+  summaryEl.innerHTML = `
+    <div class="hist-stat-card">
+      <div class="hist-stat-value">${data.length}</div>
+      <div class="hist-stat-label">Meseros activos</div>
+    </div>
+    <div class="hist-stat-card">
+      <div class="hist-stat-value">${totalOrders}</div>
+      <div class="hist-stat-label">Órdenes totales</div>
+    </div>
+    <div class="hist-stat-card green">
+      <div class="hist-stat-value">${fmt(grandTotal)}</div>
+      <div class="hist-stat-label">Total recaudado</div>
+    </div>`;
+
+  listEl.innerHTML = data.map((w, wi) => {
+    const gId = `wh-waiter-${wi}`;
+
+    const ordRows = w.orders.map(o => {
+      const [datePart, timePart] = formatDateTime(o.closed_at);
+      const prodList = o.items.map(i =>
+        `<span class="wh-product-tag">${esc(i.product_name)} ×${i.quantity}</span>`
+      ).join('');
+      return `
+        <div class="wh-order-row">
+          <span class="wh-order-meta">
+            <b>#${o.id}</b>
+            <span class="wh-table-tag">${esc(o.table_name)}</span>
+            <span class="wh-datetime">${datePart} ${timePart}</span>
+          </span>
+          <div class="wh-products">${prodList}</div>
+          <span class="wh-order-total">${fmt(o.total)}</span>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="wh-waiter-card">
+        <div class="wh-waiter-header" onclick="toggleWaiterCard('${gId}')">
+          <div class="wh-waiter-info">
+            <div class="wh-avatar">${esc(w.user_name.charAt(0).toUpperCase())}</div>
+            <div>
+              <div class="wh-waiter-name">${esc(w.user_name)}</div>
+              <div class="wh-waiter-stats">
+                ${w.orders.length} orden${w.orders.length !== 1 ? 'es' : ''}
+                · ${w.items_qty} producto${w.items_qty !== 1 ? 's' : ''}
+              </div>
+            </div>
+          </div>
+          <div class="wh-waiter-right">
+            <span class="wh-waiter-total">${fmt(w.total)}</span>
+            <span class="wh-chevron" id="${gId}-chev">${icon('chevron', 16)}</span>
+          </div>
+        </div>
+        <div class="wh-orders-list" id="${gId}">${ordRows}</div>
+      </div>`;
+  }).join('');
+}
+
+function toggleWaiterCard(gId) {
+  const el  = document.getElementById(gId);
+  const chv = document.getElementById(`${gId}-chev`);
+  const open = el.classList.toggle('open');
+  chv.classList.toggle('open', open);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -935,8 +1097,35 @@ function renderProductsTable() {
     return;
   }
 
-  tbody.innerHTML = list.map(p => `
-    <tr>
+  // Agrupar por categoría
+  const groups = {};
+  for (const p of list) {
+    if (!groups[p.category_id]) {
+      groups[p.category_id] = { name: p.category_name, type: p.category_type, products: [] };
+    }
+    groups[p.category_id].products.push(p);
+  }
+
+  // Ordenar grupos: por tipo (bebida → boquita → comida), luego por nombre
+  const typeOrder = { bebida: 0, boquita: 1, comida: 2 };
+  const sortedGroups = Object.entries(groups).sort(([, a], [, b]) =>
+    (typeOrder[a.type] ?? 3) - (typeOrder[b.type] ?? 3) || a.name.localeCompare(b.name)
+  );
+
+  tbody.innerHTML = sortedGroups.map(([catId, group]) => {
+    const gId   = `ag-${catId}`;
+    const count = group.products.length;
+    const header = `
+      <tr class="cat-group-header" onclick="toggleAdminCatGroup('${gId}')">
+        <td colspan="6">
+          <span class="cat-group-toggle">${icon('chevron', 14)}</span>
+          <span class="badge badge-${group.type}">${typeLabel[group.type] || group.type}</span>
+          <b>${esc(group.name)}</b>
+          <span class="cat-group-count">${count} producto${count !== 1 ? 's' : ''}</span>
+        </td>
+      </tr>`;
+    const rows = group.products.map(p => `
+    <tr class="cat-group-row ${gId}" hidden>
       <td><b>${esc(p.name)}</b></td>
       <td>${esc(p.category_name)}</td>
       <td><span class="badge badge-${p.category_type}">${typeLabel[p.category_type] || p.category_type}</span></td>
@@ -949,6 +1138,16 @@ function renderProductsTable() {
         <button class="btn btn-ghost-danger btn-sm" onclick="confirmDelete('producto', ${p.id}, '${esc(p.name)}')">${icon('trash', 13)}Eliminar</button>
       </td>
     </tr>`).join('');
+    return header + rows;
+  }).join('');
+}
+
+function toggleAdminCatGroup(gId) {
+  const rows   = document.querySelectorAll(`.cat-group-row.${gId}`);
+  const header = document.querySelector(`.cat-group-header[onclick*="${gId}"]`);
+  const open   = rows.length && rows[0].hidden;
+  rows.forEach(r => { r.hidden = !open; });
+  if (header) header.querySelector('.cat-group-toggle').classList.toggle('open', open);
 }
 
 function openProductModal(productId) {

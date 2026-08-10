@@ -72,16 +72,47 @@
         </span>
         <span>Mesas</span>
       </button>
-      <button class="nav-btn" id="nav-history" onclick="showMainView('history')">
-        <span class="nav-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M4 3v18l2.5-1.5L9 21l2.5-1.5L14 21l2.5-1.5L19 21V3l-2.5 1.5L14 3l-2.5 1.5L9 3 6.5 4.5Z"/>
-            <path d="M8.5 9h7"/><path d="M8.5 13h4.5"/>
-          </svg>
-        </span>
-        <span>Historial</span>
-      </button>
+      <!-- Árbol de historial -->
+      <div class="nav-tree show" id="nav-history-tree">
+        <button class="nav-btn nav-tree-parent" id="nav-history" onclick="toggleHistoryMenu()">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 3v18l2.5-1.5L9 21l2.5-1.5L14 21l2.5-1.5L19 21V3l-2.5 1.5L14 3l-2.5 1.5L9 3 6.5 4.5Z"/>
+              <path d="M8.5 9h7"/><path d="M8.5 13h4.5"/>
+            </svg>
+          </span>
+          <span>Historial</span>
+          <span class="nav-chevron" id="nav-history-chevron">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
+        </button>
+
+        <div class="nav-tree-children" id="nav-history-children">
+          <button class="nav-btn nav-child" id="nav-hist-cobros" onclick="showHistorialTab('cobros')">
+            <span class="nav-child-line"></span>
+            <span class="nav-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M4 3v18l2.5-1.5L9 21l2.5-1.5L14 21l2.5-1.5L19 21V3l-2.5 1.5L14 3l-2.5 1.5L9 3 6.5 4.5Z"/>
+                <path d="M8.5 9h7"/><path d="M8.5 13h4.5"/>
+              </svg>
+            </span>
+            <span>Cobros</span>
+          </button>
+          <button class="nav-btn nav-child" id="nav-hist-meseros" onclick="showHistorialTab('meseros')">
+            <span class="nav-child-line"></span>
+            <span class="nav-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <span>Meseros</span>
+          </button>
+        </div>
+      </div>
 
       <!-- Árbol de administración (solo admin) -->
       <div class="nav-tree" id="nav-admin-tree">
@@ -256,42 +287,73 @@
     <div id="view-history" class="content-section">
       <div class="section-header">
         <div class="sh-title">
-          <h2>Historial de Cobros</h2>
-          <p class="sh-sub">Órdenes cerradas y corte de caja</p>
+          <h2 id="history-section-title">Historial de Cobros</h2>
+          <p class="sh-sub" id="history-section-sub">Órdenes cerradas y corte de caja</p>
         </div>
       </div>
 
-      <!-- Filtro de fechas -->
-      <div class="hist-filter-bar">
-        <div class="hist-filter-group">
-          <label for="hist-date-from">Desde</label>
-          <input type="date" id="hist-date-from">
+      <!-- ── Tab: Cobros ── -->
+      <div id="hist-cobros-tab" class="hist-tab active">
+        <!-- Filtro de fechas -->
+        <div class="hist-filter-bar">
+          <div class="hist-filter-group">
+            <label for="hist-date-from">Desde</label>
+            <input type="date" id="hist-date-from">
+          </div>
+          <div class="hist-filter-group">
+            <label for="hist-date-to">Hasta</label>
+            <input type="date" id="hist-date-to">
+          </div>
+          <button class="btn btn-primary" onclick="loadHistory()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+            </svg>
+            Buscar
+          </button>
+          <button class="btn btn-outline" onclick="clearHistoryFilters()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            </svg>
+            Limpiar
+          </button>
         </div>
-        <div class="hist-filter-group">
-          <label for="hist-date-to">Hasta</label>
-          <input type="date" id="hist-date-to">
-        </div>
-        <button class="btn btn-primary" onclick="loadHistory()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
-          </svg>
-          Buscar
-        </button>
-        <button class="btn btn-outline" onclick="clearHistoryFilters()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
-          </svg>
-          Limpiar
-        </button>
+
+        <div id="history-summary" class="hist-summary-bar"></div>
+        <div id="history-list" class="hist-list"></div>
       </div>
 
-      <!-- Resumen -->
-      <div id="history-summary" class="hist-summary-bar"></div>
+      <!-- ── Tab: Meseros ── -->
+      <div id="hist-meseros-tab" class="hist-tab">
+        <div class="hist-filter-bar">
+          <div class="hist-filter-group">
+            <label for="wh-date-from">Desde</label>
+            <input type="date" id="wh-date-from">
+          </div>
+          <div class="hist-filter-group">
+            <label for="wh-date-to">Hasta</label>
+            <input type="date" id="wh-date-to">
+          </div>
+          <button class="btn btn-primary" onclick="loadWaiterHistory()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+            </svg>
+            Buscar
+          </button>
+          <button class="btn btn-outline" onclick="clearWaiterFilters()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            </svg>
+            Limpiar
+          </button>
+        </div>
 
-      <!-- Lista de órdenes -->
-      <div id="history-list" class="hist-list"></div>
+        <div id="waiter-summary" class="hist-summary-bar"></div>
+        <div id="waiter-list" class="hist-list"></div>
+      </div>
     </div>
 
     <!-- ·· ADMIN VIEW ·· -->
