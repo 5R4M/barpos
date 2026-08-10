@@ -1384,7 +1384,9 @@ select:focus-visible,
 
 .hist-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 20px 28px;
   display: flex;
   flex-direction: column;
@@ -1403,6 +1405,8 @@ select:focus-visible,
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--line);
+  /* sin esto el contenedor flex las aplasta en vez de dejarlas desbordar */
+  flex-shrink: 0;
 }
 
 .hist-order-header {
@@ -1788,7 +1792,9 @@ select:focus-visible,
 /* ═══════════════════════════════════════════════════════════
    HISTORIAL — pestañas y vista de meseros
 ═══════════════════════════════════════════════════════════ */
-.hist-tab { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+/* min-height:0 es obligatorio: sin él el panel crece hasta el alto de su
+   contenido en vez de encogerse, y la lista interna nunca puede scrollear. */
+.hist-tab { display: none; flex: 1; min-height: 0; flex-direction: column; overflow: hidden; }
 .hist-tab.active { display: flex; }
 
 /* ── Agrupación por categoría en la tabla de productos ───── */
@@ -1824,6 +1830,7 @@ select:focus-visible,
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .wh-waiter-header {
