@@ -24,10 +24,18 @@ function initDB() {
     tables:     [],
     orders:     [],
     orderItems: [],
-    _seq: { users: 0, categories: 0, products: 0, tables: 0, orders: 0, orderItems: 0 }
+    voids:      [],
+    _seq: { users: 0, categories: 0, products: 0, tables: 0, orders: 0, orderItems: 0, voids: 0 },
+    _catalogVersion: 0
   }).write();
 
+  // Bases creadas antes de que existieran las anulaciones
+  if (!db.has('voids').value())     db.set('voids', []).write();
+  if (!db.has('_seq.voids').value()) db.set('_seq.voids', 0).write();
+
   if (db.get('users').size().value() === 0) seedData();
+
+  syncCatalog();
 }
 
 function nextId(col) {
@@ -37,6 +45,252 @@ function nextId(col) {
 }
 
 const now = () => new Date().toISOString();
+
+// ── Catálogo base ─────────────────────────────────────────────────────────────
+// Carta completa de bar deportivo + restaurante. `syncCatalog()` la aplica de
+// forma incremental: agrega lo que falta y nunca pisa un precio ya editado.
+// Subir CATALOG_VERSION vuelve a correr la sincronización una sola vez.
+const CATALOG_VERSION = 2;
+
+const CATALOG = [
+  // ── Bebidas ──────────────────────────────────────────────────────────────
+  { name: 'Cervezas', type: 'bebida', products: [
+    { name: 'Gallo Vidrio',            price: 15  },
+    { name: 'Gallo Lata',              price: 15  },
+    { name: 'Gallo Litro',             price: 30  },
+    { name: 'Cabro Vidrio',            price: 15  },
+    { name: 'Dorada Vidrio',           price: 15  },
+    { name: 'Montecarlo Vidrio',       price: 18  },
+    { name: 'Corona Vidrio',           price: 25  },
+    { name: 'Corona Lata',             price: 25  },
+    { name: 'Modelo Especial Lata',    price: 28  },
+    { name: 'Heineken Vidrio',         price: 28  },
+    { name: 'Stella Artois Vidrio',    price: 30  },
+    { name: 'Michelob Ultra Lata',     price: 25  },
+    { name: 'Miller Lite Lata',        price: 25  },
+    { name: 'Salva Vida Vidrio',       price: 20  },
+    { name: 'Cubeta 5 Gallo',          price: 70  },
+    { name: 'Cubeta 5 Corona',         price: 115 },
+    { name: 'Jarra de Cerveza',        price: 65  },
+  ]},
+
+  { name: 'Micheladas', type: 'bebida', products: [
+    { name: 'Michelada Gallo',         price: 25 },
+    { name: 'Michelada Litro',         price: 45 },
+    { name: 'Michelada Corona',        price: 35 },
+    { name: 'Michelada Preparada',     price: 35 },
+    { name: 'Ojo Rojo',                price: 30 },
+  ]},
+
+  { name: 'Licores y Tragos', type: 'bebida', products: [
+    { name: 'Ron con Cola',            price: 30 },
+    { name: 'Cuba Libre',              price: 32 },
+    { name: 'Vodka con Jugo',          price: 35 },
+    { name: 'Vodka Tonic',             price: 35 },
+    { name: 'Whisky en las Rocas',     price: 45 },
+    { name: 'Whisky con Soda',         price: 45 },
+    { name: 'Gin Tonic',               price: 45 },
+    { name: 'Shot de Tequila',         price: 30 },
+    { name: 'Shot de Mezcal',          price: 40 },
+    { name: 'Shot de Ron',             price: 20 },
+    { name: 'Shot de Quetzalteca',     price: 18 },
+  ]},
+
+  { name: 'Botellas', type: 'bebida', products: [
+    { name: 'Botella Quetzalteca',       price: 120 },
+    { name: 'Botella Venado',            price: 130 },
+    { name: 'Botella Botran Añejo',      price: 350 },
+    { name: 'Botella Smirnoff',          price: 300 },
+    { name: 'Botella Jose Cuervo',       price: 400 },
+    { name: 'Botella Johnnie Walker Red', price: 450 },
+    { name: 'Botella Zacapa 23',         price: 850 },
+  ]},
+
+  { name: 'Cocteles', type: 'bebida', products: [
+    { name: 'Margarita',               price: 40 },
+    { name: 'Mojito',                  price: 40 },
+    { name: 'Piña Colada',             price: 45 },
+    { name: 'Daiquiri de Fresa',       price: 40 },
+    { name: 'Tequila Sunrise',         price: 42 },
+    { name: 'Jarra de Sangría',        price: 90 },
+    { name: 'Jarra de Margarita',      price: 110 },
+  ]},
+
+  { name: 'Refrescos', type: 'bebida', products: [
+    { name: 'Coca-Cola',               price: 12 },
+    { name: 'Coca-Cola Litro',         price: 25 },
+    { name: 'Sprite',                  price: 12 },
+    { name: 'Fanta',                   price: 12 },
+    { name: 'Agua Pura',               price: 10 },
+    { name: 'Agua Mineral',            price: 15 },
+    { name: 'Té Frío',                 price: 15 },
+    { name: 'Bebida Energética',       price: 25 },
+  ]},
+
+  { name: 'Jugos y Frescos', type: 'bebida', products: [
+    { name: 'Jugo Natural',            price: 18 },
+    { name: 'Jugo de Naranja',         price: 20 },
+    { name: 'Limonada',                price: 15 },
+    { name: 'Limonada con Soda',       price: 20 },
+    { name: 'Jarra de Limonada',       price: 45 },
+    { name: 'Licuado de Fresa',        price: 25 },
+    { name: 'Fresco del Día',          price: 15 },
+  ]},
+
+  { name: 'Café y Calientes', type: 'bebida', products: [
+    { name: 'Café Americano',          price: 15 },
+    { name: 'Café con Leche',          price: 18 },
+    { name: 'Espresso',                price: 15 },
+    { name: 'Capuchino',               price: 25 },
+    { name: 'Té Caliente',             price: 12 },
+    { name: 'Chocolate Caliente',      price: 22 },
+  ]},
+
+  // ── Boquitas ─────────────────────────────────────────────────────────────
+  { name: 'Boquitas Frías', type: 'boquita', products: [
+    { name: 'Nachos con Guacamole',    price: 45 },
+    { name: 'Guacamole con Totopos',   price: 40 },
+    { name: 'Tabla de Quesos',         price: 85 },
+    { name: 'Tabla de Embutidos',      price: 95 },
+    { name: 'Ceviche de Camarón',      price: 65 },
+    { name: 'Ceviche de Pescado',      price: 55 },
+    { name: 'Cóctel de Camarón',       price: 70 },
+  ]},
+
+  { name: 'Boquitas Calientes', type: 'boquita', products: [
+    { name: 'Alitas BBQ (8)',          price: 65 },
+    { name: 'Alitas Búfalo (8)',       price: 65 },
+    { name: 'Alitas de Pollo',         price: 65 },
+    { name: 'Papas Fritas',            price: 30 },
+    { name: 'Papas con Queso',         price: 45 },
+    { name: 'Aros de Cebolla',         price: 35 },
+    { name: 'Dedos de Queso',          price: 45 },
+    { name: 'Nachos Supremos',         price: 65 },
+    { name: 'Chicharrones',            price: 40 },
+    { name: 'Camarones al Ajillo',     price: 75 },
+    { name: 'Costillitas BBQ',         price: 95 },
+    { name: 'Tostadas (3)',            price: 25 },
+  ]},
+
+  { name: 'Tablas para Compartir', type: 'boquita', products: [
+    { name: 'Tabla Taberna (2 personas)',  price: 150 },
+    { name: 'Tabla Deportiva (4 personas)', price: 250 },
+    { name: 'Picadera Mixta',              price: 120 },
+    { name: 'Combo Alitas + Cubeta',       price: 180 },
+  ]},
+
+  // ── Comida ───────────────────────────────────────────────────────────────
+  { name: 'Entradas', type: 'comida', products: [
+    { name: 'Sopa del Día',            price: 30 },
+    { name: 'Sopa de Tortilla',        price: 35 },
+    { name: 'Caldo de Res',            price: 45 },
+    { name: 'Ensalada César',          price: 45 },
+    { name: 'Ensalada César con Pollo', price: 60 },
+    { name: 'Ensalada Mixta',          price: 35 },
+  ]},
+
+  { name: 'Hamburguesas y Sándwiches', type: 'comida', products: [
+    { name: 'Hamburguesa Clásica',     price: 55 },
+    { name: 'Hamburguesa con Queso',   price: 65 },
+    { name: 'Hamburguesa BBQ',         price: 75 },
+    { name: 'Hamburguesa Taberna',     price: 85 },
+    { name: 'Sándwich de Pollo',       price: 55 },
+    { name: 'Club Sándwich',           price: 65 },
+    { name: 'Hot Dog Especial',        price: 40 },
+  ]},
+
+  { name: 'Platos Fuertes', type: 'comida', products: [
+    { name: 'Churrasco a la Parrilla', price: 125 },
+    { name: 'Lomito a la Pimienta',    price: 135 },
+    { name: 'Puyazo a la Parrilla',    price: 130 },
+    { name: 'Costillas a la BBQ',      price: 130 },
+    { name: 'Pollo a la Plancha',      price: 85  },
+    { name: 'Pechuga Empanizada',      price: 85  },
+    { name: 'Filete de Pescado',       price: 110 },
+    { name: 'Mojarra Frita',           price: 95  },
+    { name: 'Camarones a la Plancha',  price: 140 },
+    { name: 'Parrillada para 2',       price: 280 },
+  ]},
+
+  { name: 'Pastas y Pizzas', type: 'comida', products: [
+    { name: 'Pasta Carbonara',         price: 75  },
+    { name: 'Pasta Alfredo',           price: 75  },
+    { name: 'Pasta Bolognesa',         price: 75  },
+    { name: 'Pizza Pepperoni Personal', price: 60 },
+    { name: 'Pizza Hawaiana Personal', price: 60  },
+    { name: 'Pizza Suprema Familiar',  price: 150 },
+  ]},
+
+  { name: 'Comida Típica', type: 'comida', products: [
+    { name: 'Pepián',                  price: 80 },
+    { name: 'Hilachas',                price: 75 },
+    { name: 'Carne Guisada',           price: 75 },
+    { name: 'Chiles Rellenos',         price: 70 },
+    { name: 'Tacos (3)',               price: 45 },
+    { name: 'Desayuno Chapín',         price: 45 },
+  ]},
+
+  { name: 'Acompañamientos', type: 'comida', products: [
+    { name: 'Arroz',                   price: 15 },
+    { name: 'Frijoles Volteados',      price: 15 },
+    { name: 'Puré de Papa',            price: 20 },
+    { name: 'Papas al Horno',          price: 25 },
+    { name: 'Plátanos Fritos',         price: 20 },
+    { name: 'Ensalada de Repollo',     price: 15 },
+    { name: 'Tortillas (5)',           price: 8  },
+  ]},
+
+  { name: 'Postres', type: 'comida', products: [
+    { name: 'Flan',                    price: 30 },
+    { name: 'Cheesecake',              price: 40 },
+    { name: 'Pastel de Chocolate',     price: 40 },
+    { name: 'Tres Leches',             price: 35 },
+    { name: 'Helado (2 bolas)',        price: 25 },
+    { name: 'Banana Split',            price: 45 },
+  ]},
+];
+
+const norm = s => String(s || '').trim().toLowerCase();
+
+/**
+ * Aplica CATALOG sobre la base existente sin destruir nada:
+ * agrega categorías y productos que falten, y rellena el precio solo
+ * cuando todavía está en 0 (el seed viejo dejaba todo en 0).
+ */
+function syncCatalog() {
+  if (db.get('_catalogVersion').value() >= CATALOG_VERSION) return;
+
+  const cats     = db.get('categories').value();
+  const products = db.get('products').value();
+
+  const catByName  = new Map(cats.map(c => [norm(c.name), c]));
+  const prodByName = new Map(products.map(p => [norm(p.name), p]));
+
+  for (const entry of CATALOG) {
+    let cat = catByName.get(norm(entry.name));
+    if (!cat) {
+      cat = { id: nextId('categories'), name: entry.name, type: entry.type };
+      db.get('categories').push(cat).write();
+      catByName.set(norm(entry.name), cat);
+    }
+
+    for (const p of entry.products) {
+      const existing = prodByName.get(norm(p.name));
+      if (existing) {
+        if (!existing.price) db.get('products').find({ id: existing.id }).assign({ price: p.price }).write();
+        continue;
+      }
+      const created = {
+        id: nextId('products'), name: p.name, price: p.price,
+        category_id: cat.id, available: true
+      };
+      db.get('products').push(created).write();
+      prodByName.set(norm(p.name), created);
+    }
+  }
+
+  db.set('_catalogVersion', CATALOG_VERSION).write();
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 function seedData() {
@@ -53,70 +307,24 @@ function seedData() {
     full_name: 'Mesero', role: 'user', active: true, created_at: now()
   }).write();
 
-  // Categorías
-  const cats = [
-    { name: 'Cervezas',            type: 'bebida'  },
-    { name: 'Licores y Tragos',    type: 'bebida'  },
-    { name: 'Refrescos',           type: 'bebida'  },
-    { name: 'Boquitas Frías',      type: 'boquita' },
-    { name: 'Boquitas Calientes',  type: 'boquita' },
-    { name: 'Entradas',            type: 'comida'  },
-    { name: 'Platos Fuertes',      type: 'comida'  },
-    { name: 'Cocteles',            type: 'bebida'  },
-  ];
-  const catIds = {};
-  cats.forEach(c => {
-    const id = nextId('categories');
-    catIds[c.name] = id;
-    db.get('categories').push({ id, ...c }).write();
-  });
+  // Categorías y productos los siembra syncCatalog() a partir de CATALOG.
 
-  // Cervezas — La Taberna
-  const cervezas = [
-    { name: 'Gallo Vidrio',         price: 0, category_id: catIds['Cervezas'] },
-    { name: 'Gallo Litro',          price: 0, category_id: catIds['Cervezas'] },
-    { name: 'Corona Vidrio',        price: 0, category_id: catIds['Cervezas'] },
-    { name: 'Corona Lata',          price: 0, category_id: catIds['Cervezas'] },
-    { name: 'Heineken Vidrio',      price: 0, category_id: catIds['Cervezas'] },
-    { name: 'Montecarlo Vidrio',    price: 0, category_id: catIds['Cervezas'] },
-    { name: 'Stella Artois Vidrio', price: 0, category_id: catIds['Cervezas'] },
-    { name: 'Michelob Ultra Lata',  price: 0, category_id: catIds['Cervezas'] },
+  // Mesas, barras y áreas
+  const areas = [
+    ...Array.from({ length: 10 }, (_, i) => ({ name: `Mesa ${i + 1}`, capacity: 4 })),
+    { name: 'Barra 1',    capacity: 2 },
+    { name: 'Barra 2',    capacity: 2 },
+    { name: 'Barra 3',    capacity: 2 },
+    { name: 'Terraza 1',  capacity: 6 },
+    { name: 'Terraza 2',  capacity: 6 },
+    { name: 'Pantalla 1', capacity: 8 },
+    { name: 'Pantalla 2', capacity: 8 },
+    { name: 'VIP',        capacity: 10 },
+    { name: 'Para Llevar', capacity: 1 },
   ];
-  cervezas.forEach(p =>
-    db.get('products').push({ id: nextId('products'), ...p, available: true }).write()
+  areas.forEach(t =>
+    db.get('tables').push({ id: nextId('tables'), ...t, status: 'libre' }).write()
   );
-
-  // Otros productos
-  const products = [
-    { name: 'Ron con Cola',            price: 0,  category_id: catIds['Licores y Tragos']   },
-    { name: 'Vodka con Jugo',          price: 0,  category_id: catIds['Licores y Tragos']   },
-    { name: 'Whisky en las Rocas',     price: 0,  category_id: catIds['Licores y Tragos']   },
-    { name: 'Margarita',               price: 0,  category_id: catIds['Licores y Tragos']   },
-    { name: 'Coca-Cola',               price: 0,  category_id: catIds['Refrescos']          },
-    { name: 'Agua Mineral',            price: 0,  category_id: catIds['Refrescos']          },
-    { name: 'Jugo Natural',            price: 0,  category_id: catIds['Refrescos']          },
-    { name: 'Nachos con Guacamole',    price: 0,  category_id: catIds['Boquitas Frías']     },
-    { name: 'Tabla de Quesos',         price: 0,  category_id: catIds['Boquitas Frías']     },
-    { name: 'Alitas de Pollo',         price: 0,  category_id: catIds['Boquitas Calientes'] },
-    { name: 'Camarones al Ajillo',     price: 0,  category_id: catIds['Boquitas Calientes'] },
-    { name: 'Papas Fritas',            price: 0,  category_id: catIds['Boquitas Calientes'] },
-    { name: 'Sopa del Día',            price: 0,  category_id: catIds['Entradas']           },
-    { name: 'Ensalada César',          price: 0,  category_id: catIds['Entradas']           },
-    { name: 'Churrasco a la Parrilla', price: 0,  category_id: catIds['Platos Fuertes']     },
-    { name: 'Filete de Pescado',       price: 0,  category_id: catIds['Platos Fuertes']     },
-    { name: 'Pollo a la Plancha',      price: 0,  category_id: catIds['Platos Fuertes']     },
-    { name: 'Pasta Carbonara',         price: 0,  category_id: catIds['Platos Fuertes']     },
-  ];
-  products.forEach(p =>
-    db.get('products').push({ id: nextId('products'), ...p, available: true }).write()
-  );
-
-  // Mesas y barras
-  for (let i = 1; i <= 8; i++)
-    db.get('tables').push({ id: nextId('tables'), name: `Mesa ${i}`, capacity: 4, status: 'libre' }).write();
-  db.get('tables').push({ id: nextId('tables'), name: 'Barra 1', capacity: 2, status: 'libre' }).write();
-  db.get('tables').push({ id: nextId('tables'), name: 'Barra 2', capacity: 2, status: 'libre' }).write();
-  db.get('tables').push({ id: nextId('tables'), name: 'Terraza', capacity: 6, status: 'libre' }).write();
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -166,8 +374,47 @@ function deleteUser(id) {
 }
 
 // ── Categories ────────────────────────────────────────────────────────────────
+const CATEGORY_TYPES = ['bebida', 'boquita', 'comida'];
+
 function getCategories() {
-  return db.get('categories').sortBy(['type', 'name']).value();
+  const products = db.get('products').value();
+  return db.get('categories')
+    .map(c => ({ ...c, product_count: products.filter(p => p.category_id === c.id).length }))
+    .sortBy(['type', 'name'])
+    .value();
+}
+
+function createCategory(data) {
+  const name = String(data.name || '').trim();
+  const type = CATEGORY_TYPES.includes(data.type) ? data.type : 'bebida';
+  if (!name) return { success: false, error: 'El nombre es obligatorio' };
+  if (db.get('categories').find(c => norm(c.name) === norm(name)).value())
+    return { success: false, error: 'Ya existe una categoría con ese nombre' };
+
+  const id = nextId('categories');
+  db.get('categories').push({ id, name, type }).write();
+  return { success: true, id };
+}
+
+function updateCategory(id, data) {
+  const cat = db.get('categories').find({ id }).value();
+  if (!cat) return { success: false, error: 'Categoría no encontrada' };
+
+  const name = String(data.name || '').trim();
+  const type = CATEGORY_TYPES.includes(data.type) ? data.type : cat.type;
+  if (!name) return { success: false, error: 'El nombre es obligatorio' };
+  if (db.get('categories').find(c => c.id !== id && norm(c.name) === norm(name)).value())
+    return { success: false, error: 'Ya existe una categoría con ese nombre' };
+
+  db.get('categories').find({ id }).assign({ name, type }).write();
+  return { success: true };
+}
+
+function deleteCategory(id) {
+  const used = db.get('products').filter({ category_id: id }).size().value();
+  if (used) return { success: false, error: `La categoría tiene ${used} producto${used !== 1 ? 's' : ''}. Muévalos o elimínelos primero.` };
+  db.get('categories').remove({ id }).write();
+  return { success: true };
 }
 
 // ── Products ──────────────────────────────────────────────────────────────────
@@ -230,6 +477,85 @@ function deleteTable(id) {
 }
 
 // ── Orders ────────────────────────────────────────────────────────────────────
+// IVA guatemalteco: va incluido en el precio de venta, así que no se suma al
+// total — se desglosa en el recibo a partir de lo que el cliente ya paga.
+const TAX_RATE = 0.12;
+
+const PAYMENT_METHODS = ['efectivo', 'tarjeta', 'transferencia'];
+const PAYMENT_LABELS   = {
+  efectivo:      'Efectivo',
+  tarjeta:       'Tarjeta',
+  transferencia: 'Transferencia'
+};
+
+// A dónde se imprime cada ítem de la comanda. La barra despacha bebida;
+// todo lo que se cocina va a cocina.
+const destinoDe = categoryType => (categoryType === 'bebida' ? 'Barra' : 'Cocina');
+
+// Ciclo de vida de un ítem, del pedido a la mesa.
+// 'enviado' es el nombre viejo de 'en_espera'; se normaliza al leer.
+const ITEM_ESTADOS   = ['pendiente', 'en_espera', 'preparando', 'listo', 'entregado'];
+const ESTADOS_ACTIVOS = ['en_espera', 'preparando', 'listo'];   // lo que vive en la pantalla de cocina
+const SIGUIENTE_ESTADO = { en_espera: 'preparando', preparando: 'listo', listo: 'entregado' };
+const SELLO_ESTADO     = { preparando: 'started_at', listo: 'ready_at', entregado: 'delivered_at' };
+
+const ESTADO_LABEL = {
+  pendiente:  'Sin enviar',
+  en_espera:  'En espera',
+  preparando: 'Preparando',
+  listo:      'Listo',
+  entregado:  'Entregado'
+};
+
+const normEstado = s => (!s || s === 'enviado') ? 'en_espera' : s;
+const yaEnviado  = s => normEstado(s) !== 'pendiente';
+
+const round2 = n => Math.round((Number(n) || 0) * 100) / 100;
+
+/** Subtotal, descuento, propina y total de una orden a partir de sus ítems. */
+function computeTotals(order, items) {
+  const subtotal = round2(items.reduce((s, i) => s + i.unit_price * i.quantity, 0));
+
+  let discount = 0;
+  if (order.discount_type === 'porcentaje') {
+    discount = round2(subtotal * (Number(order.discount_value) || 0) / 100);
+  } else if (order.discount_type === 'monto') {
+    discount = round2(Number(order.discount_value) || 0);
+  }
+  discount = Math.min(discount, subtotal);   // nunca deja el subtotal en negativo
+
+  const tip   = round2(order.tip);
+  const total = round2(subtotal - discount + tip);
+
+  return {
+    subtotal,
+    discount,
+    tip,
+    total,
+    tax: round2(total - total / (1 + TAX_RATE)),   // IVA contenido en el total
+    tax_base: round2(total / (1 + TAX_RATE))
+  };
+}
+
+function enrichItems(items) {
+  const products   = db.get('products').value();
+  const categories = db.get('categories').value();
+  return items.map(item => {
+    const p   = products.find(x => x.id === item.product_id);
+    const cat = p ? categories.find(c => c.id === p.category_id) : null;
+    const status = normEstado(item.status);
+    return {
+      ...item,
+      note:          item.note || '',
+      status,                                   // ítems previos a la comanda ya cuentan como despachados
+      status_label:  ESTADO_LABEL[status] || status,
+      product_name:  p?.name || '?',
+      category_name: cat?.name || '—',
+      destino:       destinoDe(cat?.type)
+    };
+  });
+}
+
 function getOpenOrders() {
   const orders   = db.get('orders').filter({ status: 'abierta' }).value();
   const tables   = db.get('tables').value();
@@ -237,13 +563,15 @@ function getOpenOrders() {
   const allItems = db.get('orderItems').value();
   return orders.map(o => {
     const items = allItems.filter(i => i.order_id === o.id);
-    const total = items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
     return {
       ...o,
       table_name: tables.find(t => t.id === o.table_id)?.name  || '?',
       user_name:  users.find(u => u.id === o.user_id)?.full_name || '?',
       item_count: items.reduce((s, i) => s + i.quantity, 0),
-      total
+      pending_count: items.filter(i => normEstado(i.status) === 'pendiente').reduce((s, i) => s + i.quantity, 0),
+      ready_count:   items.filter(i => normEstado(i.status) === 'listo').reduce((s, i) => s + i.quantity, 0),
+      guests: o.guests || 0,
+      ...computeTotals(o, items)
     };
   });
 }
@@ -252,55 +580,117 @@ function getOrderWithItems(orderId) {
   const order = db.get('orders').find({ id: orderId }).value();
   if (!order) return null;
 
-  const tables   = db.get('tables').value();
-  const users    = db.get('users').value();
-  const products = db.get('products').value();
-  const items    = db.get('orderItems').filter({ order_id: orderId }).value();
-
-  const enrichedItems = items.map(item => ({
-    ...item,
-    product_name: products.find(p => p.id === item.product_id)?.name || '?'
-  }));
-
-  const total = enrichedItems.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+  const tables = db.get('tables').value();
+  const users  = db.get('users').value();
+  const items  = enrichItems(db.get('orderItems').filter({ order_id: orderId }).value());
+  const voids  = db.get('voids').filter({ order_id: orderId }).value();
 
   return {
     ...order,
-    table_name: tables.find(t => t.id === order.table_id)?.name  || '?',
-    user_name:  users.find(u => u.id === order.user_id)?.full_name || '?',
-    items: enrichedItems,
-    total
+    guests:        order.guests || 0,
+    discount_type: order.discount_type || null,
+    tip:           round2(order.tip),
+    table_name:    tables.find(t => t.id === order.table_id)?.name  || '?',
+    user_name:     users.find(u => u.id === order.user_id)?.full_name || '?',
+    items,
+    voids,
+    pending_count: items.filter(i => i.status === 'pendiente').reduce((s, i) => s + i.quantity, 0),
+    ...computeTotals(order, items)
   };
 }
 
-function createOrder(tableId, userId) {
+function createOrder(tableId, userId, guests) {
   const existing = db.get('orders').find({ table_id: tableId, status: 'abierta' }).value();
   if (existing) return { success: false, error: 'La mesa ya tiene una orden abierta', orderId: existing.id };
 
   const id = nextId('orders');
-  db.get('orders').push({ id, table_id: tableId, user_id: userId, status: 'abierta', created_at: now() }).write();
+  db.get('orders').push({
+    id, table_id: tableId, user_id: userId,
+    status: 'abierta', created_at: now(),
+    guests: parseInt(guests) || 0,
+    discount_type: null, discount_value: 0, tip: 0,
+    payment_method: null, amount_paid: 0, change_given: 0
+  }).write();
   db.get('tables').find({ id: tableId }).assign({ status: 'ocupada' }).write();
   return { success: true, orderId: id };
 }
 
-function addOrderItem(orderId, productId, qty) {
-  const existing = db.get('orderItems').find({ order_id: orderId, product_id: productId }).value();
+function setOrderGuests(orderId, guests) {
+  const n = parseInt(guests);
+  if (!Number.isFinite(n) || n < 0) return { success: false, error: 'Número de comensales inválido' };
+  const order = db.get('orders').find({ id: orderId }).value();
+  if (!order) return { success: false, error: 'Orden no encontrada' };
+  db.get('orders').find({ id: orderId }).assign({ guests: n }).write();
+  return { success: true };
+}
+
+/** Cambia la orden de mesa. La mesa vieja queda libre y la nueva ocupada. */
+function transferOrder(orderId, newTableId) {
+  const order = db.get('orders').find({ id: orderId }).value();
+  if (!order) return { success: false, error: 'Orden no encontrada' };
+  if (order.status !== 'abierta') return { success: false, error: 'La orden ya fue cobrada' };
+  if (order.table_id === newTableId) return { success: false, error: 'La orden ya está en esa mesa' };
+
+  const destino = db.get('tables').find({ id: newTableId }).value();
+  if (!destino) return { success: false, error: 'Mesa destino no encontrada' };
+
+  const ocupada = db.get('orders').find({ table_id: newTableId, status: 'abierta' }).value();
+  if (ocupada) return { success: false, error: `${destino.name} ya tiene una orden abierta` };
+
+  const anterior = order.table_id;
+  db.get('orders').find({ id: orderId }).assign({ table_id: newTableId }).write();
+  db.get('tables').find({ id: anterior }).assign({ status: 'libre' }).write();
+  db.get('tables').find({ id: newTableId }).assign({ status: 'ocupada' }).write();
+  return { success: true, table_name: destino.name };
+}
+
+/**
+ * Los ítems nacen 'pendiente'. Solo se fusionan líneas del mismo producto que
+ * compartan nota y que todavía no se hayan mandado: una vez impresa la comanda,
+ * lo nuevo tiene que salir como línea aparte o la cocina no se entera.
+ */
+function addOrderItem(orderId, productId, qty, note) {
+  const product = db.get('products').find({ id: productId }).value();
+  if (!product) return { success: false, error: 'Producto no encontrado' };
+
+  const nota = String(note || '').trim();
+  const existing = db.get('orderItems')
+    .find(i => i.order_id === orderId && i.product_id === productId &&
+               (i.note || '') === nota && i.status === 'pendiente')
+    .value();
+
   if (existing) {
     db.get('orderItems').find({ id: existing.id }).assign({ quantity: existing.quantity + qty }).write();
   } else {
-    const product = db.get('products').find({ id: productId }).value();
     db.get('orderItems').push({
       id: nextId('orderItems'),
       order_id:   orderId,
       product_id: productId,
       quantity:   qty,
-      unit_price: product.price
+      unit_price: product.price,
+      note:       nota,
+      status:     'pendiente',
+      sent_at:    null
     }).write();
   }
   return { success: true };
 }
 
+function setOrderItemNote(itemId, note) {
+  const item = db.get('orderItems').find({ id: itemId }).value();
+  if (!item) return { success: false, error: 'Ítem no encontrado' };
+  db.get('orderItems').find({ id: itemId }).assign({ note: String(note || '').trim() }).write();
+  return { success: true };
+}
+
 function updateOrderItem(itemId, qty) {
+  const item = db.get('orderItems').find({ id: itemId }).value();
+  if (!item) return { success: false, error: 'Ítem no encontrado' };
+
+  // Bajar la cantidad de algo ya despachado es una anulación: exige motivo.
+  if (qty < item.quantity && yaEnviado(item.status)) {
+    return { success: false, error: 'Ya fue enviado a cocina. Use Anular para quitarlo.', needsVoid: true };
+  }
   if (qty <= 0) {
     db.get('orderItems').remove({ id: itemId }).write();
   } else {
@@ -310,16 +700,254 @@ function updateOrderItem(itemId, qty) {
 }
 
 function removeOrderItem(itemId) {
+  const item = db.get('orderItems').find({ id: itemId }).value();
+  if (!item) return { success: false, error: 'Ítem no encontrado' };
+  if (yaEnviado(item.status)) {
+    return { success: false, error: 'Ya fue enviado a cocina. Use Anular para quitarlo.', needsVoid: true };
+  }
   db.get('orderItems').remove({ id: itemId }).write();
   return { success: true };
 }
 
-function closeOrder(orderId) {
+/**
+ * Quita un ítem ya despachado dejando rastro en `voids`. Sin motivo no se
+ * anula: es el registro que separa un error de servicio de una fuga de caja.
+ */
+function voidOrderItem(itemId, reason, userId) {
+  const motivo = String(reason || '').trim();
+  if (!motivo) return { success: false, error: 'Indique el motivo de la anulación' };
+
+  const item = db.get('orderItems').find({ id: itemId }).value();
+  if (!item) return { success: false, error: 'Ítem no encontrado' };
+
+  const product = db.get('products').find({ id: item.product_id }).value();
+  const user    = db.get('users').find({ id: userId }).value();
+
+  db.get('voids').push({
+    id:           nextId('voids'),
+    order_id:     item.order_id,
+    product_id:   item.product_id,
+    product_name: product?.name || '?',
+    quantity:     item.quantity,
+    unit_price:   item.unit_price,
+    reason:       motivo,
+    user_id:      userId,
+    user_name:    user?.full_name || '?',
+    created_at:   now()
+  }).write();
+
+  db.get('orderItems').remove({ id: itemId }).write();
+  return { success: true };
+}
+
+/** Marca como enviados los ítems pendientes y devuelve la comanda por destino. */
+function sendToKitchen(orderId) {
   const order = db.get('orders').find({ id: orderId }).value();
   if (!order) return { success: false, error: 'Orden no encontrada' };
-  db.get('orders').find({ id: orderId }).assign({ status: 'cobrada', closed_at: now() }).write();
-  db.get('tables').find({ id: order.table_id }).assign({ status: 'libre' }).write();
+
+  const pendientes = enrichItems(
+    db.get('orderItems').filter(i => i.order_id === orderId && normEstado(i.status) === 'pendiente').value()
+  );
+  if (!pendientes.length) return { success: false, error: 'No hay ítems pendientes de enviar' };
+
+  const sentAt = now();
+  pendientes.forEach(i =>
+    db.get('orderItems').find({ id: i.id })
+      .assign({ status: 'en_espera', sent_at: sentAt, started_at: null, ready_at: null, delivered_at: null })
+      .write()
+  );
+
+  const table = db.get('tables').find({ id: order.table_id }).value();
+  const grupos = {};
+  for (const i of pendientes) {
+    (grupos[i.destino] = grupos[i.destino] || []).push(i);
+  }
+
+  return {
+    success: true,
+    sent_at: sentAt,
+    table_name: table?.name || '?',
+    order_id: orderId,
+    comandas: Object.entries(grupos).map(([destino, items]) => ({ destino, items }))
+  };
+}
+
+// ── Cocina y barra ────────────────────────────────────────────────────────────
+// Una comanda es lo que salió junto en un envío: mismo pedido, misma hora,
+// mismo destino. Es la unidad que el cocinero levanta y despacha.
+const claveComanda = i => `${i.order_id}|${i.sent_at || ''}|${i.destino}`;
+
+/**
+ * Comandas vivas de cocina y barra, la más vieja primero.
+ * El estado de la comanda es el del ítem menos avanzado: mientras algo siga
+ * en la plancha, la comanda no está lista.
+ */
+function getKitchenTickets(destinoFiltro) {
+  const abiertas = db.get('orders').filter({ status: 'abierta' }).value();
+  const porId    = new Map(abiertas.map(o => [o.id, o]));
+  const tables   = db.get('tables').value();
+  const users    = db.get('users').value();
+
+  const items = enrichItems(db.get('orderItems').filter(i => porId.has(i.order_id)).value())
+    .filter(i => ESTADOS_ACTIVOS.includes(i.status))
+    .filter(i => !destinoFiltro || i.destino === destinoFiltro);
+
+  const grupos = new Map();
+  for (const i of items) {
+    const k = claveComanda(i);
+    if (!grupos.has(k)) {
+      const order = porId.get(i.order_id);
+      grupos.set(k, {
+        key:        k,
+        order_id:   i.order_id,
+        destino:    i.destino,
+        sent_at:    i.sent_at || order.created_at,
+        table_name: tables.find(t => t.id === order.table_id)?.name || '?',
+        user_name:  users.find(u => u.id === order.user_id)?.full_name || '?',
+        items:      []
+      });
+    }
+    grupos.get(k).items.push(i);
+  }
+
+  return [...grupos.values()].map(t => {
+    const menosAvanzado = t.items.reduce((peor, i) =>
+      ESTADOS_ACTIVOS.indexOf(i.status) < ESTADOS_ACTIVOS.indexOf(peor) ? i.status : peor,
+      'listo');
+    return {
+      ...t,
+      status:       menosAvanzado,
+      status_label: ESTADO_LABEL[menosAvanzado],
+      next_status:  SIGUIENTE_ESTADO[menosAvanzado] || null,
+      qty:          t.items.reduce((s, i) => s + i.quantity, 0),
+      mixta:        new Set(t.items.map(i => i.status)).size > 1,
+      // Lo que ya se puede llevar a la mesa aunque el resto siga en cocina
+      ready_count:  t.items.filter(i => i.status === 'listo').length,
+      ready_qty:    t.items.filter(i => i.status === 'listo').reduce((s, i) => s + i.quantity, 0)
+    };
+  }).sort((a, b) => String(a.sent_at).localeCompare(String(b.sent_at)));
+}
+
+/** Cuántas comandas hay en cada estado. Alimenta el contador de la navegación. */
+function getKitchenCounts() {
+  const tickets = getKitchenTickets(null);
+  const conteo = { total: tickets.length, en_espera: 0, preparando: 0, listo: 0, Cocina: 0, Barra: 0 };
+  for (const t of tickets) {
+    conteo[t.status] = (conteo[t.status] || 0) + 1;
+    conteo[t.destino] = (conteo[t.destino] || 0) + 1;
+  }
+  return conteo;
+}
+
+/** Mueve todos los ítems de una comanda al estado indicado. */
+function setTicketStatus(orderId, sentAt, destino, status) {
+  if (!ITEM_ESTADOS.includes(status) || status === 'pendiente')
+    return { success: false, error: 'Estado inválido' };
+
+  const objetivo = enrichItems(
+    db.get('orderItems').filter(i => i.order_id === orderId).value()
+  ).filter(i => (i.sent_at || '') === (sentAt || '') && i.destino === destino
+             && ESTADOS_ACTIVOS.includes(i.status));
+
+  if (!objetivo.length) return { success: false, error: 'La comanda ya no está activa' };
+
+  const sello = SELLO_ESTADO[status];
+  const marca = now();
+  objetivo.forEach(i => {
+    const cambio = { status };
+    if (sello) cambio[sello] = marca;
+    db.get('orderItems').find({ id: i.id }).assign(cambio).write();
+  });
+
+  return { success: true, status, label: ESTADO_LABEL[status], count: objetivo.length };
+}
+
+/** Avanza la comanda al siguiente paso del ciclo. */
+function advanceTicket(orderId, sentAt, destino) {
+  const ticket = getKitchenTickets(null)
+    .find(t => t.order_id === orderId && (t.sent_at || '') === (sentAt || '') && t.destino === destino);
+  if (!ticket)             return { success: false, error: 'La comanda ya no está activa' };
+  if (!ticket.next_status) return { success: false, error: 'La comanda ya está lista' };
+  return setTicketStatus(orderId, sentAt, destino, ticket.next_status);
+}
+
+/** Cambia el estado de un solo ítem, para corregir sin mover toda la comanda. */
+function setItemStatus(itemId, status) {
+  if (!ITEM_ESTADOS.includes(status)) return { success: false, error: 'Estado inválido' };
+  const item = db.get('orderItems').find({ id: itemId }).value();
+  if (!item) return { success: false, error: 'Ítem no encontrado' };
+
+  const cambio = { status };
+  const sello = SELLO_ESTADO[status];
+  if (sello) cambio[sello] = now();
+  db.get('orderItems').find({ id: itemId }).assign(cambio).write();
+  return { success: true, status, label: ESTADO_LABEL[status] };
+}
+
+function setOrderDiscount(orderId, type, value) {
+  const order = db.get('orders').find({ id: orderId }).value();
+  if (!order) return { success: false, error: 'Orden no encontrada' };
+
+  if (!type) {
+    db.get('orders').find({ id: orderId }).assign({ discount_type: null, discount_value: 0 }).write();
+    return { success: true };
+  }
+  if (!['monto', 'porcentaje'].includes(type))
+    return { success: false, error: 'Tipo de descuento inválido' };
+
+  const v = Number(value);
+  if (!Number.isFinite(v) || v < 0) return { success: false, error: 'Valor de descuento inválido' };
+  if (type === 'porcentaje' && v > 100) return { success: false, error: 'El porcentaje no puede pasar de 100' };
+
+  db.get('orders').find({ id: orderId }).assign({ discount_type: type, discount_value: v }).write();
   return { success: true };
+}
+
+/**
+ * Cierra la orden con el detalle del pago. Guarda el desglose calculado para
+ * que el historial no cambie si mañana se editan los precios del producto.
+ */
+function closeOrder(orderId, payment = {}) {
+  const order = db.get('orders').find({ id: orderId }).value();
+  if (!order) return { success: false, error: 'Orden no encontrada' };
+  if (order.status === 'cobrada') return { success: false, error: 'La orden ya fue cobrada' };
+
+  const items = db.get('orderItems').filter({ order_id: orderId }).value();
+  if (!items.length) return { success: false, error: 'La orden está vacía' };
+
+  const method = payment.method || 'efectivo';
+  if (!PAYMENT_METHODS.includes(method)) return { success: false, error: 'Método de pago inválido' };
+
+  const tip = round2(payment.tip);
+  if (tip < 0) return { success: false, error: 'La propina no puede ser negativa' };
+
+  const totals = computeTotals({ ...order, tip }, items);
+
+  // En efectivo se exige cubrir el total; con tarjeta o transferencia el cobro
+  // es exacto y el vuelto no aplica.
+  let amountPaid = round2(payment.amountPaid);
+  let change     = 0;
+  if (method === 'efectivo') {
+    if (!amountPaid) amountPaid = totals.total;
+    if (amountPaid < totals.total)
+      return { success: false, error: `Efectivo insuficiente: faltan Q${round2(totals.total - amountPaid).toFixed(2)}` };
+    change = round2(amountPaid - totals.total);
+  } else {
+    amountPaid = totals.total;
+  }
+
+  db.get('orders').find({ id: orderId }).assign({
+    status: 'cobrada',
+    closed_at: now(),
+    tip,
+    payment_method: method,
+    amount_paid: amountPaid,
+    change_given: change,
+    totals_snapshot: totals
+  }).write();
+  db.get('tables').find({ id: order.table_id }).assign({ status: 'libre' }).write();
+
+  return { success: true, ...totals, payment_method: method, amount_paid: amountPaid, change_given: change };
 }
 
 // ── Cancel Order (liberar mesa) ───────────────────────────────────────────────
@@ -363,15 +991,60 @@ function getOrderHistory(dateFrom, dateTo) {
       .filter(i => i.order_id === o.id)
       .map(i => ({
         ...i,
+        note: i.note || '',
         product_name: products.find(p => p.id === i.product_id)?.name || '?'
       }));
-    const total = items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
     return {
       ...o,
       table_name: tables.find(t => t.id === o.table_id)?.name || '?',
       user_name:  users.find(u => u.id === o.user_id)?.full_name || '?',
+      payment_method: o.payment_method || 'efectivo',
+      payment_label:  PAYMENT_LABELS[o.payment_method] || 'Efectivo',
+      guests: o.guests || 0,
       items,
-      total
+      // Órdenes cobradas antes del desglose no tienen snapshot: se recalculan.
+      ...(o.totals_snapshot || computeTotals(o, items))
+    };
+  }).value();
+}
+
+/** Corte por método de pago: lo que debe estar en caja vs lo que entró por banco. */
+function getPaymentBreakdown(dateFrom, dateTo) {
+  const orders = getOrderHistory(dateFrom, dateTo);
+  const base = PAYMENT_METHODS.map(m => ({
+    method: m, label: PAYMENT_LABELS[m], orders: 0, total: 0, tip: 0
+  }));
+
+  for (const o of orders) {
+    const row = base.find(b => b.method === o.payment_method) || base[0];
+    row.orders += 1;
+    row.total  = round2(row.total + o.total);
+    row.tip    = round2(row.tip + (o.tip || 0));
+  }
+
+  return {
+    methods: base,
+    total:   round2(base.reduce((s, b) => s + b.total, 0)),
+    tips:    round2(base.reduce((s, b) => s + b.tip, 0)),
+    orders:  orders.length
+  };
+}
+
+/** Anulaciones del periodo: qué se quitó, quién y por qué. */
+function getVoids(dateFrom, dateTo) {
+  const tables = db.get('tables').value();
+  const orders = db.get('orders').value();
+
+  let list = db.get('voids');
+  if (dateFrom) list = list.filter(v => (v.created_at || '') >= dateFrom);
+  if (dateTo)   list = list.filter(v => (v.created_at || '') <= dateTo + 'T23:59:59.999Z');
+
+  return list.orderBy('created_at', 'desc').map(v => {
+    const order = orders.find(o => o.id === v.order_id);
+    return {
+      ...v,
+      table_name: tables.find(t => t.id === order?.table_id)?.name || '?',
+      amount: round2(v.unit_price * v.quantity)
     };
   }).value();
 }
@@ -398,6 +1071,7 @@ function getWaiterHistory(dateFrom, dateTo) {
         user_name: u?.full_name || '?',
         orders:    [],
         total:     0,
+        tips:      0,
         items_qty: 0
       };
     }
@@ -405,16 +1079,19 @@ function getWaiterHistory(dateFrom, dateTo) {
       .filter(i => i.order_id === o.id)
       .map(i => ({
         ...i,
+        note: i.note || '',
         product_name: products.find(p => p.id === i.product_id)?.name || '?'
       }));
-    const total = items.reduce((s, i) => s + i.unit_price * i.quantity, 0);
+    const totals = o.totals_snapshot || computeTotals(o, items);
     byUser[o.user_id].orders.push({
       ...o,
       table_name: tables.find(t => t.id === o.table_id)?.name || '?',
+      payment_label: PAYMENT_LABELS[o.payment_method] || 'Efectivo',
       items,
-      total
+      ...totals
     });
-    byUser[o.user_id].total     += total;
+    byUser[o.user_id].total     = round2(byUser[o.user_id].total + totals.total);
+    byUser[o.user_id].tips      = round2((byUser[o.user_id].tips || 0) + totals.tip);
     byUser[o.user_id].items_qty += items.reduce((s, i) => s + i.quantity, 0);
   }
 
@@ -425,10 +1102,14 @@ module.exports = {
   initDB,
   login,
   getUsers, createUser, updateUser, deleteUser,
-  getCategories,
+  getCategories, createCategory, updateCategory, deleteCategory,
   getProducts, createProduct, updateProduct, deleteProduct,
   getTables, createTable, updateTable, deleteTable,
   getOpenOrders, getOrderWithItems, createOrder,
-  addOrderItem, updateOrderItem, removeOrderItem, closeOrder,
-  cancelOrder, deleteOrder, getOrderHistory, getWaiterHistory
+  setOrderGuests, transferOrder, setOrderDiscount, sendToKitchen,
+  addOrderItem, setOrderItemNote, updateOrderItem, removeOrderItem, voidOrderItem,
+  getKitchenTickets, getKitchenCounts, setTicketStatus, advanceTicket, setItemStatus,
+  closeOrder, cancelOrder, deleteOrder,
+  getOrderHistory, getWaiterHistory, getPaymentBreakdown, getVoids,
+  PAYMENT_METHODS, PAYMENT_LABELS, TAX_RATE, ESTADO_LABEL
 };

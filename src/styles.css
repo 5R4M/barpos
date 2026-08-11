@@ -356,7 +356,8 @@ select:focus-visible,
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  min-height: 34px;
+  /* Se toca durante el servicio (filtro de mesas y de cocina): piso táctil */
+  min-height: 40px;
   padding: 0 13px;
   background: transparent;
   border: none;
@@ -697,18 +698,24 @@ select:focus-visible,
 /* ── Menú agrupado por categoría ─────────────────────────── */
 .menu-cat-section { display: flex; flex-direction: column; gap: 10px; }
 
+/* El menú abre colapsado: este encabezado es el único camino a un producto,
+   así que se trata como control de servicio y respeta el piso táctil de 44px. */
 .menu-cat-header {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 34px;
-  padding: 4px 2px;
+  min-height: 44px;
+  padding: 4px 8px;
   cursor: pointer;
   user-select: none;
   border-bottom: 1px solid var(--line);
-  transition: border-color var(--dur) var(--ease-out);
+  border-radius: 8px 8px 0 0;
+  transition: border-color var(--dur) var(--ease-out),
+              background-color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
 }
-.menu-cat-header:hover { border-color: var(--line-strong); }
+.menu-cat-header:hover  { border-color: var(--line-strong); }
+.menu-cat-header:active { transform: scale(.985); background: var(--surface-2); }
 .menu-cat-toggle {
   display: inline-flex;
   color: var(--muted);
@@ -828,7 +835,7 @@ select:focus-visible,
 }
 .qty-controls { display: flex; align-items: center; gap: 10px; }
 .qty-btn {
-  width: 42px; height: 42px;
+  width: 44px; height: 44px;
   border-radius: 50%;
   border: 1px solid var(--line-strong);
   background: var(--card-bg);
@@ -1954,4 +1961,890 @@ select:focus-visible,
   font-weight: 700;
   color: var(--text);
   font-variant-numeric: tabular-nums;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SERVICIO — buscador, comanda, notas, cobro y corte de caja
+   Sin color decorativo: azul = acción o pendiente, verde =
+   dinero cobrado, rojo = destructivo. Todo lo demás es neutro.
+═══════════════════════════════════════════════════════════ */
+
+/* ── Buscador de la carta ────────────────────────────────── */
+.menu-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 12px 16px 0;
+}
+.menu-search-ico {
+  position: absolute;
+  left: 28px;
+  display: inline-flex;
+  color: var(--muted);
+  pointer-events: none;
+}
+.menu-search input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 40px 10px 38px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--card-bg);
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text);
+  transition: border-color var(--dur) var(--ease-out),
+              box-shadow var(--dur) var(--ease-out);
+}
+.menu-search input::-webkit-search-cancel-button { display: none; }
+.menu-search input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--ring);
+}
+.menu-search-clear {
+  position: absolute;
+  right: 24px;
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-light);
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+.menu-search-clear:active { transform: scale(.92); }
+
+/* ── Barra de acciones de la orden ───────────────────────── */
+.order-meta-bar {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.order-meta-btn {
+  flex: 1;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--card-bg);
+  color: var(--text-light);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out),
+              background-color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+.order-meta-btn:active { transform: scale(.97); }
+@media (hover: hover) and (pointer: fine) {
+  .order-meta-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent-dark);
+    background: var(--accent-soft);
+  }
+}
+
+/* ── Ítem de la orden: estado, destino y nota ─────────────── */
+.item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.item-head .item-name { flex: 1; min-width: 0; }
+
+.item-tag {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+/* Pendiente usa el azul tenue de "sugerido, no confirmado": todavía no sale. */
+.item-tag.pendiente {
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  border: 1px solid oklch(62.3% .188 260 / .28);
+}
+.item-tag.enviado {
+  background: var(--surface-2);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+
+.item-note {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-light);
+  font-style: italic;
+}
+.item-note svg { flex-shrink: 0; opacity: .75; }
+
+.item-note-btn {
+  width: 44px; height: 44px;
+  margin-left: auto;
+  margin-right: 10px;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out),
+              background-color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+.item-note-btn:active { transform: scale(.94); }
+@media (hover: hover) and (pointer: fine) {
+  .item-note-btn:hover {
+    border-color: var(--line-strong);
+    color: var(--accent-dark);
+    background: var(--accent-soft);
+  }
+}
+
+/* ── Enviar a cocina ─────────────────────────────────────── */
+.btn-enviar {
+  width: 100%;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 12px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--card-bg);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+.btn-enviar:active   { transform: scale(.985); }
+.btn-enviar:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+@media (hover: hover) and (pointer: fine) {
+  .btn-enviar:hover { background: var(--accent-dark); }
+}
+
+/* ── Subtotales del pie ──────────────────────────────────── */
+.order-sums { margin-bottom: 10px; }
+.sum-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 3px 0;
+  font-size: 12.5px;
+  color: var(--text-light);
+}
+.sum-amount { font-variant-numeric: tabular-nums; font-weight: 600; }
+.sum-discount { color: var(--danger-dark); }
+
+.order-total-amount { font-variant-numeric: tabular-nums; }
+
+/* ── Tarjeta de mesa: cuenta viva y pendientes ────────────── */
+.tc-cuenta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.tc-cuenta-total {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.3px;
+}
+.tc-pendiente {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  border: 1px solid oklch(62.3% .188 260 / .28);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.tc-pendiente svg { flex-shrink: 0; }
+
+/* ── Modales chicos ──────────────────────────────────────── */
+.modal-sm { max-width: 400px; }
+
+/* ── Cobro ───────────────────────────────────────────────────
+   Jerarquía de una sola lectura: contexto arriba, la cifra
+   grande al centro, los controles debajo en orden de uso.
+   El verde queda reservado al botón de cobrar; el vuelto es
+   neutro porque es plata que sale, no que entra.
+──────────────────────────────────────────────────────────── */
+/* Este modal no usa <form>, que es donde vive el relleno lateral de los demás,
+   así que el inset de 24px se declara aquí. Cabecera, total, campos y pie
+   comparten la misma línea vertical de arriba a abajo.
+   La tarjeta no scrollea: si falta alto, cede solo la zona de campos, de modo
+   que el total y el botón de cobrar siguen a la vista. */
+.pago-card {
+  width: 540px;
+  max-width: 96vw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pago-cuerpo {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 24px 18px;
+}
+
+.pago-header { align-items: flex-start; }
+.pago-titulo { display: flex; flex-direction: column; gap: 2px; }
+.pago-contexto {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Bloque protagonista */
+.pago-hero {
+  flex-shrink: 0;
+  margin: 18px 24px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  text-align: center;
+}
+.pago-hero-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.pago-hero-monto {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -.5px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.pago-hero-detalle {
+  min-height: 15px;
+  font-size: 11.5px;
+  color: var(--text-light);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Campos: la versalita convierte la etiqueta en metadato */
+.pago-campo { display: flex; flex-direction: column; gap: 7px; }
+.pago-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pago-metodos { display: flex; gap: 6px; }
+.pago-metodo {
+  flex: 1;
+  min-height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 7px 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--text-light);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out),
+              background-color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+.pago-metodo svg { opacity: .85; }
+.pago-metodo:active { transform: scale(.97); }
+.pago-metodo.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+.pago-metodo.active svg { opacity: 1; }
+
+.propina-row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+/* Los chips generados por JS participan del mismo flex que los fijos */
+.chips-dinamicos { display: contents; }
+.propina-chip {
+  /* Reparten el ancho sobrante: en táctil, más área es mejor que más aire */
+  flex: 1 1 auto;
+  min-width: 56px;
+  min-height: 44px;
+  padding: 8px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--card-bg);
+  color: var(--text-light);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  transition: border-color var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out),
+              background-color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+.propina-chip:active { transform: scale(.97); }
+.propina-chip.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+@media (hover: hover) and (pointer: fine) {
+  .propina-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent-dark);
+    background: var(--accent-soft);
+  }
+}
+
+/* Campo de moneda con la Q anclada, para que el número no baile */
+.input-moneda {
+  position: relative;
+  flex: 1 1 110px;
+  min-width: 96px;
+  max-width: 152px;
+  display: flex;
+}
+.input-moneda-signo {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  pointer-events: none;
+}
+.input-moneda input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px 10px 25px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: var(--card-bg);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  transition: border-color var(--dur) var(--ease-out),
+              box-shadow var(--dur) var(--ease-out);
+}
+.input-moneda input::placeholder { font-weight: 500; color: var(--muted); }
+.input-moneda input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--ring);
+}
+
+.vuelto-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3px;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  transition: border-color var(--dur) var(--ease-out),
+              background-color var(--dur) var(--ease-out);
+}
+.vuelto-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.vuelto-amount {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -.4px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.vuelto-row.insuficiente {
+  border-color: oklch(63.7% .208 25 / .45);
+  background: oklch(63.7% .208 25 / .07);
+}
+.vuelto-row.insuficiente .vuelto-lbl,
+.vuelto-row.insuficiente .vuelto-amount { color: var(--danger-dark); }
+
+/* El cobro es la acción final: pesa más que Cancelar */
+.pago-card .modal-footer { margin-top: 0; }
+.btn-cobrar-modal {
+  flex: 1;
+  min-height: 48px;
+  font-size: 14.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Transferir de mesa ──────────────────────────────────── */
+.transfer-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+  margin-bottom: 4px;
+}
+.transfer-option {
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--card-bg);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--dur) var(--ease-out),
+              background-color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+.transfer-option:active { transform: scale(.97); }
+@media (hover: hover) and (pointer: fine) {
+  .transfer-option:hover { border-color: var(--accent); background: var(--accent-soft); }
+}
+.transfer-name { font-size: 13.5px; font-weight: 650; color: var(--text); }
+.transfer-cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* ── Sugerencias de nota ─────────────────────────────────── */
+.note-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+.note-chip {
+  min-height: 36px;
+  padding: 6px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 20px;
+  background: var(--surface-2);
+  color: var(--text-light);
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out),
+              background-color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+.note-chip:active { transform: scale(.95); }
+@media (hover: hover) and (pointer: fine) {
+  .note-chip:hover {
+    border-color: var(--accent);
+    color: var(--accent-dark);
+    background: var(--accent-soft);
+  }
+}
+
+/* ── Comanda impresa ─────────────────────────────────────── */
+.comanda-bloque { margin-bottom: 18px; }
+.comanda-destino {
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--text);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-align: center;
+}
+.comanda-nota {
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--text-light);
+}
+
+/* ── Recibo: desglose de pago e IVA ──────────────────────── */
+.receipt-sums { margin: 10px 0; }
+.receipt-sums > div {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+.receipt-pago   { padding-top: 6px; }
+.receipt-fiscal { color: var(--text-light); font-size: 11.5px; }
+
+/* ── Corte: desglose de caja ─────────────────────────────── */
+.corte-caja {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.corte-caja-titulo {
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.caja-fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.caja-fila:last-child { border-bottom: none; }
+.caja-metodo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--text);
+}
+.caja-metodo svg { flex-shrink: 0; opacity: .7; }
+.caja-ordenes {
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.caja-monto {
+  font-weight: 800;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.caja-extra .caja-metodo,
+.caja-extra .caja-monto { color: var(--text-light); font-weight: 600; }
+.caja-anulado .caja-metodo,
+.caja-anulado .caja-monto { color: var(--danger-dark); }
+
+.corte-vacio {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+.caja-vacio { padding: 8px 0; color: var(--muted); font-size: 12.5px; }
+
+/* ═══════════════════════════════════════════════════════════
+   COCINA Y BARRA
+   Tablero de comandas. Se lee de pie, a un brazo de distancia
+   y con las manos ocupadas: tipografía grande, un solo botón
+   por comanda y rojo solo cuando algo se pasó de tiempo.
+═══════════════════════════════════════════════════════════ */
+.kds-board {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  padding: 16px 20px 20px;
+  overflow: hidden;
+}
+
+.kds-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.kds-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--card-bg);
+}
+.kds-col-nombre {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.kds-col-count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text-light);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.kds-col-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+.kds-vacio {
+  padding: 22px 10px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* ── Comanda ─────────────────────────────────────────────── */
+.kds-ticket {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card-bg);
+  transition: border-color var(--dur) var(--ease-out);
+}
+/* Pasada de tiempo: borde y hora en rojo, nunca una franja lateral */
+.kds-ticket.atrasada { border-color: oklch(63.7% .208 25 / .5); }
+
+.kds-ticket-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.kds-mesa {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -.3px;
+  color: var(--text);
+}
+.kds-tiempo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.kds-tiempo.tarde { color: var(--danger-dark); }
+.kds-tiempo svg { flex-shrink: 0; opacity: .8; }
+
+.kds-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--muted);
+}
+.kds-destino {
+  padding: 1px 7px;
+  border-radius: 20px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+.kds-orden, .kds-mesero { font-variant-numeric: tabular-nums; }
+
+.kds-items {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+.kds-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+}
+.kds-item:last-child { border-bottom: none; }
+.kds-item.adelantado { opacity: .55; }
+
+.kds-qty {
+  flex-shrink: 0;
+  min-width: 26px;
+  padding: 2px 0;
+  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.kds-nombre {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+}
+.kds-nota {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 500;
+  font-style: italic;
+  color: var(--danger-dark);
+}
+.kds-item-estado {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.kds-acciones { display: flex; gap: 6px; }
+.kds-btn-avanzar {
+  flex: 1;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--card-bg);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+.kds-btn-avanzar:active { transform: scale(.97); }
+@media (hover: hover) and (pointer: fine) {
+  .kds-btn-avanzar:hover { background: var(--accent-dark); }
+}
+.kds-btn-atras {
+  width: 46px;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  background: var(--card-bg);
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out),
+              background-color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+.kds-btn-atras:active { transform: scale(.94); }
+@media (hover: hover) and (pointer: fine) {
+  .kds-btn-atras:hover { border-color: var(--line-strong); color: var(--text); background: var(--surface-2); }
+}
+
+/* ── Contador en la navegación ───────────────────────────── */
+.nav-badge {
+  margin-left: auto;
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: oklch(100% 0 0 / .16);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+/* Hay algo listo esperando que un mesero lo levante */
+.nav-badge.alerta { background: var(--success-dark); }
+
+/* En pantallas angostas el tablero pasa a una sola columna scrollable */
+@media (max-width: 900px) {
+  .kds-board {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .kds-col { min-height: 200px; }
 }

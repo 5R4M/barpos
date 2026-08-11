@@ -114,6 +114,18 @@
         </div>
       </div>
 
+      <button class="nav-btn" id="nav-cocina" onclick="showMainView('cocina')">
+        <span class="nav-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 3v6a2 2 0 0 1-2 2H4"/><path d="M6 3v18"/>
+            <path d="M18 3a3 3 0 0 0-3 3v6h6V6a3 3 0 0 0-3-3Z"/><path d="M18 12v9"/>
+          </svg>
+        </span>
+        <span>Cocina y Barra</span>
+        <span class="nav-badge hidden" id="nav-cocina-badge">0</span>
+      </button>
+
       <!-- Árbol de administración (solo admin) -->
       <div class="nav-tree" id="nav-admin-tree">
         <button class="nav-btn nav-tree-parent" onclick="toggleAdminMenu()">
@@ -142,6 +154,16 @@
               </svg>
             </span>
             <span>Productos</span>
+          </button>
+          <button class="nav-btn nav-child" id="nav-admin-categorias" onclick="showMainView('admin-categorias')">
+            <span class="nav-child-line"></span>
+            <span class="nav-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M3 7a2 2 0 0 1 2-2h3.5l2 2.5H19a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>
+              </svg>
+            </span>
+            <span>Categorías</span>
           </button>
           <button class="nav-btn nav-child" id="nav-admin-mesas" onclick="showMainView('admin-mesas')">
             <span class="nav-child-line"></span>
@@ -240,6 +262,20 @@
               <span id="order-time" class="order-time-tag">—</span>
             </div>
           </div>
+          <div class="menu-search">
+            <span class="menu-search-ico" aria-hidden="true">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            </span>
+            <input type="search" id="menu-search-input" autocomplete="off"
+                   placeholder="Buscar producto…" oninput="searchMenu(this.value)"
+                   aria-label="Buscar producto en la carta">
+            <button type="button" class="menu-search-clear hidden" id="menu-search-clear"
+                    onclick="searchMenu('')" aria-label="Limpiar búsqueda">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
           <div id="menu-filter-bar" class="menu-filter-bar">
             <!-- category buttons injected here -->
           </div>
@@ -254,6 +290,30 @@
             <h4>Orden</h4>
             <span id="order-id-tag" class="order-id-tag">#—</span>
           </div>
+          <div class="order-meta-bar">
+            <button type="button" class="order-meta-btn" id="btn-guests" onclick="openGuestsModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+              <span id="guests-label">Comensales</span>
+            </button>
+            <button type="button" class="order-meta-btn" onclick="openTransferModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>
+              </svg>
+              Mover
+            </button>
+            <button type="button" class="order-meta-btn" id="btn-discount" onclick="openDiscountModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20.6 13.4 12 22l-9-9V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2"/>
+              </svg>
+              Descuento
+            </button>
+          </div>
           <div id="order-items-list" class="order-items-list">
             <div class="empty-order">
               <span>Sin ítems</span>
@@ -261,9 +321,26 @@
             </div>
           </div>
           <div class="order-footer">
+            <button class="btn-enviar hidden" id="btn-enviar" onclick="enviarComanda()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/>
+              </svg>
+              <span id="btn-enviar-label">Enviar a cocina</span>
+            </button>
+            <div class="order-sums">
+              <div class="sum-row">
+                <span>Subtotal</span>
+                <span id="order-subtotal" class="sum-amount">Q0.00</span>
+              </div>
+              <div class="sum-row sum-discount hidden" id="row-discount">
+                <span id="discount-label">Descuento</span>
+                <span id="order-discount" class="sum-amount">−Q0.00</span>
+              </div>
+            </div>
             <div class="total-row">
               <span>Total</span>
-              <span id="order-total" class="order-total-amount">$0.00</span>
+              <span id="order-total" class="order-total-amount">Q0.00</span>
             </div>
             <button class="btn-cobrar" id="btn-cobrar" onclick="cobrarOrden()">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -280,6 +357,60 @@
           </div>
         </div>
 
+      </div>
+    </div>
+
+    <!-- ·· COCINA / BARRA VIEW ·· -->
+    <div id="view-cocina" class="content-section">
+      <div class="section-header">
+        <div class="sh-title">
+          <h2>Cocina y Barra</h2>
+          <p class="sh-sub" id="cocina-sub">Cargando…</p>
+        </div>
+        <div class="header-actions">
+          <div class="seg" id="cocina-destinos" role="group" aria-label="Filtrar por destino">
+            <button class="seg-btn active" onclick="setCocinaDestino(null, this)">
+              Todo <span class="seg-count" id="cnt-coc-todo">0</span>
+            </button>
+            <button class="seg-btn" onclick="setCocinaDestino('Cocina', this)">
+              Cocina <span class="seg-count" id="cnt-coc-cocina">0</span>
+            </button>
+            <button class="seg-btn" onclick="setCocinaDestino('Barra', this)">
+              Barra <span class="seg-count" id="cnt-coc-barra">0</span>
+            </button>
+          </div>
+          <button class="btn btn-outline" onclick="loadCocina()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
+            </svg>
+            Actualizar
+          </button>
+        </div>
+      </div>
+
+      <div class="kds-board" id="kds-board">
+        <div class="kds-col" data-estado="en_espera">
+          <div class="kds-col-head">
+            <span class="kds-col-nombre">En espera</span>
+            <span class="kds-col-count" id="kds-cnt-en_espera">0</span>
+          </div>
+          <div class="kds-col-body" id="kds-en_espera"></div>
+        </div>
+        <div class="kds-col" data-estado="preparando">
+          <div class="kds-col-head">
+            <span class="kds-col-nombre">Preparando</span>
+            <span class="kds-col-count" id="kds-cnt-preparando">0</span>
+          </div>
+          <div class="kds-col-body" id="kds-preparando"></div>
+        </div>
+        <div class="kds-col" data-estado="listo">
+          <div class="kds-col-head">
+            <span class="kds-col-nombre">Listo para entregar</span>
+            <span class="kds-col-count" id="kds-cnt-listo">0</span>
+          </div>
+          <div class="kds-col-body" id="kds-listo"></div>
+        </div>
       </div>
     </div>
 
@@ -397,6 +528,39 @@
         </div>
       </div>
 
+      <!-- Categorías tab -->
+      <div id="admin-categorias" class="admin-tab-content">
+        <div class="tab-toolbar">
+          <button class="btn btn-primary admin-only" id="btn-add-categoria" onclick="openCategoryModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                 stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            Nueva Categoría
+          </button>
+          <div class="filter-group">
+            <label>Filtrar:</label>
+            <select id="filter-cat-type" onchange="renderCategoriesTable()">
+              <option value="">Todos</option>
+              <option value="bebida">Bebidas</option>
+              <option value="boquita">Boquitas</option>
+              <option value="comida">Comida</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Productos</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="categories-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- Mesas tab -->
       <div id="admin-mesas" class="admin-tab-content">
         <div class="tab-toolbar">
@@ -501,6 +665,37 @@
   </div>
 </div>
 
+<!-- ·· Category Modal ·· -->
+<div id="modal-category" class="modal-overlay" onclick="closeModalOnOverlay(event,'modal-category')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modal-category-title">Nueva Categoría</h3>
+      <button class="modal-close" onclick="closeModal('modal-category')" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <form id="form-category" onsubmit="saveCategory(event)">
+      <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" id="cat-name" required maxlength="40" placeholder="Ej: Postres, Pizzas, Vinos...">
+      </div>
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="cat-type">
+          <option value="bebida">Bebida</option>
+          <option value="boquita">Boquita</option>
+          <option value="comida">Comida</option>
+        </select>
+        <small class="field-hint">Define en qué filtro aparece la categoría dentro del menú de la orden.</small>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-category')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- ·· Table Modal ·· -->
 <div id="modal-table" class="modal-overlay" onclick="closeModalOnOverlay(event,'modal-table')">
   <div class="modal-card">
@@ -595,12 +790,251 @@
         </svg>
         Imprimir
       </button>
-      <button class="btn btn-secondary" onclick="closeModal('modal-receipt')">Cancelar</button>
-      <button class="btn btn-success" id="btn-confirm-payment" onclick="confirmPayment()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        Confirmar Pago
+      <button class="btn btn-primary" onclick="closeModal('modal-receipt')">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ·· Comanda Modal (ticket de cocina/barra) ·· -->
+<div id="modal-comanda" class="modal-overlay">
+  <div class="modal-card receipt-modal-card">
+    <div class="modal-header no-print">
+      <h3>Comanda enviada</h3>
+      <button class="modal-close" onclick="closeModal('modal-comanda')" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
       </button>
     </div>
+    <div id="comanda-content" class="receipt-content"></div>
+    <div class="modal-footer no-print receipt-actions">
+      <button class="btn btn-outline" onclick="window.print()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 6 2 18 2 18 9"/>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+          <rect width="12" height="8" x="6" y="14"/>
+        </svg>
+        Imprimir
+      </button>
+      <button class="btn btn-primary" onclick="closeModal('modal-comanda')">Listo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ·· Pago Modal ·· -->
+<div id="modal-pago" class="modal-overlay" onclick="closeModalOnOverlay(event,'modal-pago')">
+  <div class="modal-card pago-card">
+    <div class="modal-header pago-header">
+      <div class="pago-titulo">
+        <h3>Cobrar</h3>
+        <span class="pago-contexto" id="pago-contexto">—</span>
+      </div>
+      <button class="modal-close" onclick="closeModal('modal-pago')" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- La cifra que decide todo: nada compite con ella. -->
+    <div class="pago-hero">
+      <span class="pago-hero-lbl">Total a cobrar</span>
+      <span class="pago-hero-monto" id="pago-total">Q0.00</span>
+      <span class="pago-hero-detalle" id="pago-detalle"></span>
+    </div>
+
+    <!-- Solo esta zona scrollea: el total y el botón de cobrar nunca se van de vista. -->
+    <div class="pago-cuerpo">
+    <div class="pago-campo">
+      <span class="pago-lbl">Método</span>
+      <div class="pago-metodos" id="pago-metodos" role="radiogroup" aria-label="Método de pago">
+        <button type="button" class="pago-metodo active" data-method="efectivo" role="radio" aria-checked="true"
+                onclick="setPagoMetodo('efectivo')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>
+          </svg>
+          Efectivo
+        </button>
+        <button type="button" class="pago-metodo" data-method="tarjeta" role="radio" aria-checked="false"
+                onclick="setPagoMetodo('tarjeta')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
+          </svg>
+          Tarjeta
+        </button>
+        <button type="button" class="pago-metodo" data-method="transferencia" role="radio" aria-checked="false"
+                onclick="setPagoMetodo('transferencia')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>
+          </svg>
+          Transferencia
+        </button>
+      </div>
+    </div>
+
+    <div class="pago-campo">
+      <span class="pago-lbl">Propina</span>
+      <div class="propina-row">
+        <button type="button" class="propina-chip" data-tip="0"  onclick="setPropinaPct(0)">Sin</button>
+        <button type="button" class="propina-chip" data-tip="10" onclick="setPropinaPct(10)">10%</button>
+        <button type="button" class="propina-chip" data-tip="15" onclick="setPropinaPct(15)">15%</button>
+        <div class="input-moneda">
+          <span class="input-moneda-signo" aria-hidden="true">Q</span>
+          <input type="number" id="pago-propina" min="0" step="0.01" placeholder="0.00"
+                 oninput="recalcPago()" aria-label="Propina en quetzales">
+        </div>
+      </div>
+    </div>
+
+    <div class="pago-campo" id="grupo-efectivo">
+      <span class="pago-lbl">Efectivo recibido</span>
+      <div class="propina-row">
+        <button type="button" class="propina-chip" id="chip-exacto" onclick="setEfectivoExacto()">Exacto</button>
+        <!-- Denominaciones calculadas sobre el total; cada una fija el monto, no lo suma. -->
+        <span class="chips-dinamicos" id="efectivo-chips"></span>
+        <div class="input-moneda">
+          <span class="input-moneda-signo" aria-hidden="true">Q</span>
+          <input type="number" id="pago-efectivo" min="0" step="0.01" placeholder="0.00"
+                 oninput="recalcPago()" aria-label="Efectivo recibido">
+        </div>
+      </div>
+      <div class="vuelto-row" id="vuelto-row">
+        <span class="vuelto-lbl" id="vuelto-lbl">Vuelto</span>
+        <span id="pago-vuelto" class="vuelto-amount">Q0.00</span>
+      </div>
+    </div>
+    </div><!-- /pago-cuerpo -->
+
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-pago')">Cancelar</button>
+      <button type="button" class="btn btn-success btn-cobrar-modal" id="btn-confirm-payment" onclick="confirmPayment()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <span id="btn-pago-label">Cobrar</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ·· Comensales Modal ·· -->
+<div id="modal-guests" class="modal-overlay" onclick="closeModalOnOverlay(event,'modal-guests')">
+  <div class="modal-card modal-sm">
+    <div class="modal-header">
+      <h3>Comensales</h3>
+      <button class="modal-close" onclick="closeModal('modal-guests')" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <form id="form-guests" onsubmit="saveGuests(event)">
+      <div class="form-group">
+        <label>¿Cuántas personas en la mesa?</label>
+        <input type="number" id="guests-input" min="0" max="99" required>
+        <small class="field-hint">Sirve para el ticket promedio por persona en el corte.</small>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-guests')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ·· Transferir Mesa Modal ·· -->
+<div id="modal-transfer" class="modal-overlay" onclick="closeModalOnOverlay(event,'modal-transfer')">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Mover a otra mesa</h3>
+      <button class="modal-close" onclick="closeModal('modal-transfer')" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <p class="confirm-msg" id="transfer-msg">Elija la mesa destino. Solo se listan las que están libres.</p>
+    <div id="transfer-list" class="transfer-list"></div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-transfer')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ·· Descuento Modal ·· -->
+<div id="modal-discount" class="modal-overlay" onclick="closeModalOnOverlay(event,'modal-discount')">
+  <div class="modal-card modal-sm">
+    <div class="modal-header">
+      <h3>Descuento</h3>
+      <button class="modal-close" onclick="closeModal('modal-discount')" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <form id="form-discount" onsubmit="saveDiscount(event)">
+      <div class="form-group">
+        <label>Tipo</label>
+        <select id="discount-type">
+          <option value="">Sin descuento</option>
+          <option value="porcentaje">Porcentaje (%)</option>
+          <option value="monto">Monto fijo (Q)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Valor</label>
+        <input type="number" id="discount-value" min="0" step="0.01" value="0">
+        <small class="field-hint">Queda registrado en el corte como descuento de la orden.</small>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-discount')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Aplicar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ·· Nota de Ítem Modal ·· -->
+<div id="modal-note" class="modal-overlay" onclick="closeModalOnOverlay(event,'modal-note')">
+  <div class="modal-card modal-sm">
+    <div class="modal-header">
+      <h3 id="note-title">Nota del ítem</h3>
+      <button class="modal-close" onclick="closeModal('modal-note')" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <form id="form-note" onsubmit="saveNote(event)">
+      <div class="form-group">
+        <label>Indicación para cocina o barra</label>
+        <input type="text" id="note-input" maxlength="80" placeholder="Ej: sin cebolla, término medio, sin hielo">
+        <div class="note-chips" id="note-chips"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-note')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ·· Anulación Modal ·· -->
+<div id="modal-void" class="modal-overlay" onclick="closeModalOnOverlay(event,'modal-void')">
+  <div class="modal-card modal-sm">
+    <div class="modal-header">
+      <h3>Anular ítem</h3>
+      <button class="modal-close" onclick="closeModal('modal-void')" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <form id="form-void" onsubmit="saveVoid(event)">
+      <p class="confirm-msg" id="void-msg">Ya fue enviado a cocina. Indique el motivo.</p>
+      <div class="form-group">
+        <label>Motivo</label>
+        <select id="void-reason">
+          <option value="Error del mesero">Error del mesero</option>
+          <option value="Cliente cambió de opinión">Cliente cambió de opinión</option>
+          <option value="Producto agotado">Producto agotado</option>
+          <option value="Producto en mal estado">Producto en mal estado</option>
+          <option value="Cortesía de la casa">Cortesía de la casa</option>
+        </select>
+        <small class="field-hint">Queda registrado con su usuario y la hora en el corte.</small>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-void')">Cancelar</button>
+        <button type="submit" class="btn btn-danger">Anular</button>
+      </div>
+    </form>
   </div>
 </div>
 
