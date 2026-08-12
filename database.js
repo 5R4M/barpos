@@ -373,6 +373,24 @@ function deleteUser(id) {
   return { success: true };
 }
 
+/**
+ * Cambio de contraseña por el propio usuario: a diferencia de updateUser
+ * (herramienta de admin, no pide la contraseña vieja), esta exige probar
+ * que se conoce la actual. Solo toca el password, nunca nombre/rol/estado.
+ */
+function changePassword(userId, currentPassword, newPassword) {
+  const user = db.get('users').find({ id: userId }).value();
+  if (!user) return { success: false, error: 'Usuario no encontrado' };
+  if (!bcrypt.compareSync(String(currentPassword || ''), user.password))
+    return { success: false, error: 'La contraseña actual no es correcta' };
+
+  const nueva = String(newPassword || '');
+  if (nueva.length < 4) return { success: false, error: 'La nueva contraseña debe tener al menos 4 caracteres' };
+
+  db.get('users').find({ id: userId }).assign({ password: bcrypt.hashSync(nueva, 10) }).write();
+  return { success: true };
+}
+
 // ── Categories ────────────────────────────────────────────────────────────────
 const CATEGORY_TYPES = ['bebida', 'boquita', 'comida'];
 
@@ -839,7 +857,36 @@ function getKitchenCounts() {
   return conteo;
 }
 
-/** Mueve todos los ítems de una comanda al estado indicado. */
+/**
+ * Mueve solo los ítems de la comanda que están exactamente en `desde` hacia
+ * `hacia`. Es la pieza clave para no arrastrar lo que ya avanzó: si una
+ * comanda tiene un plato listo y otro todavía en la plancha, avanzar el
+ * paso lento nunca debe tocar el que ya está listo.
+ */
+function moverPasoTicket(orderId, sentAt, destino, desde, hacia) {
+  const objetivo = enrichItems(
+    db.get('orderItems').filter(i => i.order_id === orderId).value()
+  ).filter(i => (i.sent_at || '') === (sentAt || '') && i.destino === destino && i.status === desde);
+
+  if (!objetivo.length) return { success: false, error: 'La comanda ya no está en ese paso' };
+
+  const sello = SELLO_ESTADO[hacia];
+  const marca = now();
+  objetivo.forEach(i => {
+    const cambio = { status: hacia };
+    if (sello) cambio[sello] = marca;
+    db.get('orderItems').find({ id: i.id }).assign(cambio).write();
+  });
+
+  return { success: true, status: hacia, label: ESTADO_LABEL[hacia], count: objetivo.length };
+}
+
+/**
+ * Fuerza TODOS los ítems activos de una comanda a un estado, sin importar
+ * en qué paso estén. Utilidad de bajo nivel para pruebas y corrección
+ * manual; el flujo normal de la pantalla usa moverPasoTicket, que respeta
+ * el progreso de cada plato.
+ */
 function setTicketStatus(orderId, sentAt, destino, status) {
   if (!ITEM_ESTADOS.includes(status) || status === 'pendiente')
     return { success: false, error: 'Estado inválido' };
@@ -862,13 +909,38 @@ function setTicketStatus(orderId, sentAt, destino, status) {
   return { success: true, status, label: ESTADO_LABEL[status], count: objetivo.length };
 }
 
-/** Avanza la comanda al siguiente paso del ciclo. */
-function advanceTicket(orderId, sentAt, destino) {
-  const ticket = getKitchenTickets(null)
+function encontrarTicket(orderId, sentAt, destino) {
+  return getKitchenTickets(null)
     .find(t => t.order_id === orderId && (t.sent_at || '') === (sentAt || '') && t.destino === destino);
+}
+
+/** Avanza al siguiente paso solo los ítems que están en el paso actual de la comanda. */
+function advanceTicket(orderId, sentAt, destino) {
+  const ticket = encontrarTicket(orderId, sentAt, destino);
   if (!ticket)             return { success: false, error: 'La comanda ya no está activa' };
   if (!ticket.next_status) return { success: false, error: 'La comanda ya está lista' };
-  return setTicketStatus(orderId, sentAt, destino, ticket.next_status);
+  return moverPasoTicket(orderId, sentAt, destino, ticket.status, ticket.next_status);
+}
+
+/** Regresa un paso, sin tocar los platos que ya avanzaron más allá. */
+function retreatTicket(orderId, sentAt, destino) {
+  const ticket = encontrarTicket(orderId, sentAt, destino);
+  if (!ticket) return { success: false, error: 'La comanda ya no está activa' };
+  const anterior = { preparando: 'en_espera', listo: 'preparando' }[ticket.status];
+  if (!anterior) return { success: false, error: 'No se puede regresar desde este paso' };
+  return moverPasoTicket(orderId, sentAt, destino, ticket.status, anterior);
+}
+
+/**
+ * Entrega solo lo que ya está listo en una comanda, sin esperar al resto.
+ * Si un pedido de varios platos se atrasa, lo que ya salió se lleva a la
+ * mesa y el plato atrasado se queda en el tablero de cocina hasta que
+ * también esté listo.
+ */
+function deliverReadyItems(orderId, sentAt, destino) {
+  const res = moverPasoTicket(orderId, sentAt, destino, 'listo', 'entregado');
+  if (!res.success) return { success: false, error: 'No hay ítems listos para entregar' };
+  return res;
 }
 
 /** Cambia el estado de un solo ítem, para corregir sin mover toda la comanda. */
@@ -882,6 +954,105 @@ function setItemStatus(itemId, status) {
   if (sello) cambio[sello] = now();
   db.get('orderItems').find({ id: itemId }).assign(cambio).write();
   return { success: true, status, label: ESTADO_LABEL[status] };
+}
+
+// ── Historial de cocina y barra ──────────────────────────────────────────────
+// Minutos totales aceptables entre enviar la comanda y entregarla. Sirve
+// solo para marcar "tardía" en el historial; el tablero en vivo usa sus
+// propios umbrales por paso (KDS_ALERTA).
+const TARDIO_MIN = { Cocina: 20, Barra: 10 };
+
+/**
+ * Todo lo que se envió a cocina o barra, entregado o no, de cualquier orden
+ * (abierta o ya cobrada) — a diferencia de getKitchenTickets, que solo
+ * muestra lo que sigue vivo en el tablero. Es el registro permanente.
+ */
+function getKitchenHistory(dateFrom, dateTo) {
+  const orders  = db.get('orders').value();
+  const porId   = new Map(orders.map(o => [o.id, o]));
+  const tables  = db.get('tables').value();
+  const users   = db.get('users').value();
+
+  let items = enrichItems(db.get('orderItems').value()).filter(i => i.sent_at);
+  if (dateFrom) items = items.filter(i => i.sent_at >= dateFrom);
+  if (dateTo)   items = items.filter(i => i.sent_at <= dateTo + 'T23:59:59.999Z');
+
+  const grupos = new Map();
+  for (const i of items) {
+    const order = porId.get(i.order_id);
+    if (!order) continue;   // la orden se eliminó del historial de ventas
+    const k = claveComanda(i);
+    if (!grupos.has(k)) {
+      grupos.set(k, {
+        key:            k,
+        order_id:       i.order_id,
+        destino:        i.destino,
+        sent_at:        i.sent_at,
+        table_name:     tables.find(t => t.id === order.table_id)?.name || '?',
+        user_name:      users.find(u => u.id === order.user_id)?.full_name || '?',
+        order_status:   order.status,
+        order_closed_at: order.closed_at || null,
+        items:          []
+      });
+    }
+    grupos.get(k).items.push(i);
+  }
+
+  return [...grupos.values()].map(t => {
+    const status = t.items.reduce((peor, i) =>
+      ITEM_ESTADOS.indexOf(i.status) < ITEM_ESTADOS.indexOf(peor) ? i.status : peor,
+      'entregado');
+    const entregas = t.items.map(i => i.delivered_at).filter(Boolean).sort();
+    const deliveredAt = status === 'entregado' ? entregas[entregas.length - 1] || null : null;
+
+    // Si nunca se marcó como entregado y la cuenta ya se cerró, el cliente ya
+    // se fue: el reloj no puede seguir corriendo en tiempo real para siempre.
+    // Se congela en el momento del cobro, no en "ahora".
+    const cerradaSinEntregar = !deliveredAt && t.order_status !== 'abierta';
+    const referencia = deliveredAt || (cerradaSinEntregar ? t.order_closed_at : null) || now();
+    const minutos = Math.round((new Date(referencia) - new Date(t.sent_at)) / 60000);
+
+    // Qué plato específico frenó a los demás: si ya se entregó todo, es el que
+    // salió último; si no, es el que se quedó más atrás de sus compañeros de
+    // comanda. Cuando todos comparten la misma marca no hay un culpable único
+    // — toda la comanda tardó por igual — así que la lista queda completa y el
+    // frontend decide no señalar a nadie en ese caso.
+    const culpableIds = status === 'entregado'
+      ? t.items.filter(i => i.delivered_at === entregas[entregas.length - 1]).map(i => i.id)
+      : t.items.filter(i => i.status === status).map(i => i.id);
+
+    return {
+      ...t,
+      qty:          t.items.reduce((s, i) => s + i.quantity, 0),
+      status,
+      status_label: ESTADO_LABEL[status],
+      delivered_at: deliveredAt,
+      cerrada_sin_entregar: cerradaSinEntregar,
+      minutos,      // preparación si ya entregó; si no, transcurrido hasta ahora o hasta el cobro
+      tardio:       minutos > (TARDIO_MIN[t.destino] || 15),
+      culprit_ids:  culpableIds
+    };
+  }).sort((a, b) => String(b.sent_at).localeCompare(String(a.sent_at)));   // más reciente primero
+}
+
+/** El historial agrupado por día de envío, para navegar fecha por fecha. */
+function getKitchenHistoryByDay(dateFrom, dateTo) {
+  const tickets = getKitchenHistory(dateFrom, dateTo);
+  const porDia = new Map();
+
+  for (const t of tickets) {
+    const dia = t.sent_at.slice(0, 10);   // YYYY-MM-DD
+    if (!porDia.has(dia)) {
+      porDia.set(dia, { date: dia, tickets: [], qty: 0, entregados: 0, tardios: 0 });
+    }
+    const g = porDia.get(dia);
+    g.tickets.push(t);
+    g.qty += t.qty;
+    if (t.status === 'entregado') g.entregados++;
+    if (t.tardio) g.tardios++;
+  }
+
+  return [...porDia.values()].sort((a, b) => b.date.localeCompare(a.date));
 }
 
 function setOrderDiscount(orderId, type, value) {
@@ -1101,14 +1272,15 @@ function getWaiterHistory(dateFrom, dateTo) {
 module.exports = {
   initDB,
   login,
-  getUsers, createUser, updateUser, deleteUser,
+  getUsers, createUser, updateUser, deleteUser, changePassword,
   getCategories, createCategory, updateCategory, deleteCategory,
   getProducts, createProduct, updateProduct, deleteProduct,
   getTables, createTable, updateTable, deleteTable,
   getOpenOrders, getOrderWithItems, createOrder,
   setOrderGuests, transferOrder, setOrderDiscount, sendToKitchen,
   addOrderItem, setOrderItemNote, updateOrderItem, removeOrderItem, voidOrderItem,
-  getKitchenTickets, getKitchenCounts, setTicketStatus, advanceTicket, setItemStatus,
+  getKitchenTickets, getKitchenCounts, setTicketStatus, advanceTicket, retreatTicket,
+  deliverReadyItems, setItemStatus, getKitchenHistory, getKitchenHistoryByDay,
   closeOrder, cancelOrder, deleteOrder,
   getOrderHistory, getWaiterHistory, getPaymentBreakdown, getVoids,
   PAYMENT_METHODS, PAYMENT_LABELS, TAX_RATE, ESTADO_LABEL

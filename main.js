@@ -67,6 +67,7 @@ ipcMain.handle('users:list',   ()          => db.getUsers());
 ipcMain.handle('users:create', (_, data)   => db.createUser(data));
 ipcMain.handle('users:update', (_, id, d)  => db.updateUser(id, d));
 ipcMain.handle('users:delete', (_, id)     => db.deleteUser(id));
+ipcMain.handle('users:changePassword', (_, id, cur, nueva) => db.changePassword(id, cur, nueva));
 
 // ── Categories ───────────────────────────────────────────────────────────────
 ipcMain.handle('categories:list',   ()          => db.getCategories());
@@ -103,8 +104,11 @@ ipcMain.handle('orders:send',       (_, orderId)                       => db.sen
 ipcMain.handle('kitchen:tickets',    (_, destino)                 => db.getKitchenTickets(destino));
 ipcMain.handle('kitchen:counts',     ()                           => db.getKitchenCounts());
 ipcMain.handle('kitchen:advance',    (_, orderId, sentAt, destino) => db.advanceTicket(orderId, sentAt, destino));
-ipcMain.handle('kitchen:setTicket',  (_, orderId, sentAt, destino, status) => db.setTicketStatus(orderId, sentAt, destino, status));
+ipcMain.handle('kitchen:retreat',    (_, orderId, sentAt, destino) => db.retreatTicket(orderId, sentAt, destino));
+ipcMain.handle('kitchen:deliverReady', (_, orderId, sentAt, destino) => db.deliverReadyItems(orderId, sentAt, destino));
 ipcMain.handle('kitchen:setItem',    (_, itemId, status)          => db.setItemStatus(itemId, status));
+ipcMain.handle('kitchen:history',      (_, from, to) => db.getKitchenHistory(from, to));
+ipcMain.handle('kitchen:historyByDay', (_, from, to) => db.getKitchenHistoryByDay(from, to));
 ipcMain.handle('orders:setDiscount', (_, orderId, type, value)         => db.setOrderDiscount(orderId, type, value));
 ipcMain.handle('orders:close',      (_, orderId, payment)              => db.closeOrder(orderId, payment));
 ipcMain.handle('orders:cancel',        (_, id)                => db.cancelOrder(id));

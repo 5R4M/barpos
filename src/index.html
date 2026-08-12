@@ -23,7 +23,7 @@
           </svg>
         </div>
         <h1>La Taberna</h1>
-        <p>Barra y Restaurante · Powered by El Primo</p>
+        <p>Barra y Restaurante · Powered by GerionTech</p>
       </div>
       <form id="login-form">
         <div class="form-group">
@@ -111,6 +111,17 @@
             </span>
             <span>Meseros</span>
           </button>
+          <button class="nav-btn nav-child" id="nav-hist-cocina" onclick="showHistorialTab('cocina')">
+            <span class="nav-child-line"></span>
+            <span class="nav-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M8 3v6a2 2 0 0 1-2 2H4"/><path d="M6 3v18"/>
+                <path d="M18 3a3 3 0 0 0-3 3v6h6V6a3 3 0 0 0-3-3Z"/><path d="M18 12v9"/>
+              </svg>
+            </span>
+            <span>Cocina</span>
+          </button>
         </div>
       </div>
 
@@ -192,11 +203,27 @@
     </nav>
 
     <div class="sidebar-bottom">
-      <div class="user-card">
-        <div class="user-avatar" id="user-avatar">?</div>
-        <div class="user-info">
-          <div class="user-name"  id="sidebar-name">—</div>
-          <div class="user-role"  id="sidebar-role">—</div>
+      <div class="user-menu-wrap">
+        <button type="button" class="user-card" id="user-card-btn" onclick="toggleUserMenu()"
+                aria-haspopup="true" aria-expanded="false" aria-controls="user-menu">
+          <div class="user-avatar" id="user-avatar">?</div>
+          <div class="user-info">
+            <div class="user-name"  id="sidebar-name">—</div>
+            <div class="user-role"  id="sidebar-role">—</div>
+          </div>
+          <span class="user-menu-chevron" id="user-menu-chevron">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m18 15-6-6-6 6"/></svg>
+          </span>
+        </button>
+        <div class="user-menu" id="user-menu" role="menu">
+          <button type="button" class="user-menu-item" role="menuitem" onclick="openChangePasswordModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="7" cy="15" r="4"/><path d="M10 12 20 2"/><path d="m17 5 3 3"/><path d="m14 8 2 2"/>
+            </svg>
+            Cambiar contraseña
+          </button>
         </div>
       </div>
       <button class="btn-logout" onclick="logout()">
@@ -484,6 +511,37 @@
 
         <div id="waiter-summary" class="hist-summary-bar"></div>
         <div id="waiter-list" class="hist-list"></div>
+      </div>
+
+      <!-- ── Tab: Cocina ── -->
+      <div id="hist-cocina-tab" class="hist-tab">
+        <div class="hist-filter-bar">
+          <div class="hist-filter-group">
+            <label for="coc-hist-date-from">Desde</label>
+            <input type="date" id="coc-hist-date-from">
+          </div>
+          <div class="hist-filter-group">
+            <label for="coc-hist-date-to">Hasta</label>
+            <input type="date" id="coc-hist-date-to">
+          </div>
+          <button class="btn btn-primary" onclick="loadKitchenHistory()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+            </svg>
+            Buscar
+          </button>
+          <button class="btn btn-outline" onclick="clearKitchenHistoryFilters()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18"/><path d="m6 6 12 12"/>
+            </svg>
+            Limpiar
+          </button>
+        </div>
+
+        <div id="kitchen-history-summary" class="hist-summary-bar"></div>
+        <div id="kitchen-history-list" class="hist-list"></div>
       </div>
     </div>
 
@@ -980,6 +1038,37 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="closeModal('modal-discount')">Cancelar</button>
         <button type="submit" class="btn btn-primary">Aplicar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ·· Cambiar Contraseña Modal ·· -->
+<div id="modal-change-password" class="modal-overlay" onclick="closeModalOnOverlay(event,'modal-change-password')">
+  <div class="modal-card modal-sm">
+    <div class="modal-header">
+      <h3>Cambiar contraseña</h3>
+      <button class="modal-close" onclick="closeModal('modal-change-password')" aria-label="Cerrar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <form id="form-change-password" onsubmit="saveChangePassword(event)">
+      <div class="form-group">
+        <label>Contraseña actual</label>
+        <input type="password" id="cp-current" required autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <div class="form-group">
+        <label>Nueva contraseña</label>
+        <input type="password" id="cp-new" required minlength="4" autocomplete="new-password" placeholder="Mínimo 4 caracteres">
+      </div>
+      <div class="form-group">
+        <label>Confirmar nueva contraseña</label>
+        <input type="password" id="cp-confirm" required minlength="4" autocomplete="new-password" placeholder="Repetir contraseña">
+      </div>
+      <div id="cp-error" class="login-error hidden"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('modal-change-password')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
       </div>
     </form>
   </div>

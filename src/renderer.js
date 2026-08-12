@@ -23,6 +23,8 @@ const State = {
   pago:           { method: 'efectivo', tip: 0, cash: null, chipsTotal: null },
   cocinaDestino:  null,   // null = Cocina y Barra juntas
   cocinaTickets:  [],
+  kitchenHistoryDays:   [],       // último resultado crudo, para filtrar sin re-pedir
+  kitchenHistoryFilter: 'todas',  // 'todas' | 'a_tiempo' | 'tardias'
   editProduct:    null,
   editCategory:   null,
   editTable:      null,
@@ -114,9 +116,65 @@ function logout() {
   document.getElementById('login-password').value = '';
   document.getElementById('login-error').classList.add('hidden');
 
+  closeUserMenu();
   showView('view-login');
   window.api.window.collapse();
   document.getElementById('login-username').focus();
+}
+
+// ── Menú de usuario (cambiar contraseña) ─────────────────────────────────────
+function toggleUserMenu() {
+  const menu = document.getElementById('user-menu');
+  const btn  = document.getElementById('user-card-btn');
+  const abrir = !menu.classList.contains('open');
+  menu.classList.toggle('open', abrir);
+  btn.setAttribute('aria-expanded', String(abrir));
+  document.getElementById('user-menu-chevron').classList.toggle('open', abrir);
+}
+
+function closeUserMenu() {
+  document.getElementById('user-menu')?.classList.remove('open');
+  document.getElementById('user-card-btn')?.setAttribute('aria-expanded', 'false');
+  document.getElementById('user-menu-chevron')?.classList.remove('open');
+}
+
+// Cierra el menú al tocar fuera de él, sin interferir con su propio botón
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('user-card-btn')?.closest('.user-menu-wrap');
+  if (wrap && !wrap.contains(e.target)) closeUserMenu();
+});
+
+function openChangePasswordModal() {
+  closeUserMenu();
+  document.getElementById('form-change-password').reset();
+  document.getElementById('cp-error').classList.add('hidden');
+  openModal('modal-change-password');
+}
+
+async function saveChangePassword(e) {
+  e.preventDefault();
+  const errEl   = document.getElementById('cp-error');
+  errEl.classList.add('hidden');
+
+  const actual   = document.getElementById('cp-current').value;
+  const nueva    = document.getElementById('cp-new').value;
+  const confirmar = document.getElementById('cp-confirm').value;
+
+  if (nueva !== confirmar) {
+    errEl.textContent = 'La confirmación no coincide con la nueva contraseña.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  const res = await window.api.users.changePassword(State.user.id, actual, nueva);
+  if (res.success === false) {
+    errEl.textContent = res.error || 'No se pudo cambiar la contraseña.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  closeModal('modal-change-password');
+  showToast('Contraseña actualizada', 'success');
 }
 
 // ── Vista base ─────────────────────────────────────────────────────────────────
@@ -166,6 +224,20 @@ function showMainView(name) {
   // Historial y administración solo para admins
   const soloAdmin = name === 'history' || !!ADMIN_ROUTES[name];
   if (soloAdmin && State.user && State.user.role !== 'admin') return;
+
+  // Si se navega desde una orden abierta usando cualquier ítem del menú
+  // lateral (no solo el botón Volver), hay que soltar su estado — si no,
+  // queda una mesa "recordada" de fondo aunque la pantalla ya cambió.
+  // Esto nunca toca la orden en sí: solo limpia lo que el renderer recuerda
+  // en memoria; los ítems agregados siguen "pendientes" en la base tal cual
+  // se dejaron, listos para retomarse al volver a abrir esa mesa.
+  if (document.getElementById('view-order').classList.contains('active')) {
+    State.currentOrderId = null;
+    State.currentOrder   = null;
+    State.categoryFilter = null;
+    State.menuSearch     = '';
+    State.openMenuCats.clear();
+  }
 
   document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -226,7 +298,9 @@ const ICON_PATHS = {
   tag:      '<path d="M20.6 13.4 12 22l-9-9V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.2"/>',
   swap:     '<path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/>',
   cash:     '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
-  card:     '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>'
+  card:     '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+  key:      '<circle cx="7" cy="15" r="4"/><path d="M10 12 20 2"/><path d="m17 5 3 3"/><path d="m14 8 2 2"/>',
+  chevronUp: '<path d="m18 15-6-6-6 6"/>'
 };
 
 // Etiquetas de método de pago. El espejo del mapa en database.js.
@@ -547,20 +621,54 @@ function renderCocina(tickets, counts) {
       (atrasadas ? ` · ${atrasadas} pasada${atrasadas === 1 ? '' : 's'} de tiempo` : '')
     : 'Sin comandas pendientes';
 
-  for (const estado of KDS_COLUMNAS) {
-    const enEstado = tickets.filter(t => t.status === estado);
-    document.getElementById(`kds-cnt-${estado}`).textContent = enEstado.length;
+  // Un pedido mixto (algo listo, algo todavía en la plancha) se parte en dos
+  // tarjetas: lo que ya se puede entregar pasa de una vez al panel de Listo,
+  // en vez de quedar escondido dentro de la tarjeta que sigue cocinándose.
+  const porColumna = { en_espera: [], preparando: [], listo: [] };
 
-    const cuerpo = document.getElementById(`kds-${estado}`);
-    if (!enEstado.length) {
-      cuerpo.innerHTML = `<div class="kds-vacio">${
-        estado === 'listo' ? 'Nada esperando entrega.' : 'Sin comandas.'}</div>`;
-      continue;
+  for (const t of tickets) {
+    if (t.mixta) {
+      const listos    = t.items.filter(i => i.status === 'listo');
+      const cocinando = t.items.filter(i => i.status !== 'listo');
+      porColumna.listo.push(ticketReadyHTML(t, listos));
+      porColumna[t.status].push(ticketCookingHTML(t, cocinando, listos.length));
+    } else {
+      porColumna[t.status].push(ticketHTML(t));
     }
-    cuerpo.innerHTML = enEstado.map(t => ticketHTML(t)).join('');
+  }
+
+  for (const estado of KDS_COLUMNAS) {
+    document.getElementById(`kds-cnt-${estado}`).textContent = porColumna[estado].length;
+    const cuerpo = document.getElementById(`kds-${estado}`);
+    cuerpo.innerHTML = porColumna[estado].length
+      ? porColumna[estado].join('')
+      : `<div class="kds-vacio">${estado === 'listo' ? 'Nada esperando entrega.' : 'Sin comandas.'}</div>`;
   }
 }
 
+/** Fila de un plato dentro de la lista de una tarjeta. */
+function itemRowHTML(i, totalEnTarjeta) {
+  // En un pedido de varios platos, cada uno se puede marcar listo por
+  // separado: el que se atrasa no debe frenar al que ya salió. Pero solo
+  // tiene sentido una vez que el plato entró a preparar — "listo" antes de
+  // eso no significa nada, y ya listo no necesita el botón otra vez.
+  const puedeMarcar = totalEnTarjeta > 1 && i.status === 'preparando';
+  return `
+    <li class="kds-item">
+      <span class="kds-qty">${i.quantity}</span>
+      <span class="kds-nombre">
+        ${esc(i.product_name)}
+        ${i.note ? `<span class="kds-nota">${esc(i.note)}</span>` : ''}
+      </span>
+      ${puedeMarcar ? `
+        <button class="kds-item-listo" onclick="marcarItemListo(${i.id})"
+                aria-label="Marcar ${esc(i.product_name)} listo" title="Marcar listo">
+          ${icon('check', 13)}
+        </button>` : ''}
+    </li>`;
+}
+
+/** Comanda uniforme: todos los platos comparten el mismo paso. */
 function ticketHTML(t) {
   const min      = minutosDesde(t.sent_at);
   const atrasada = min >= (KDS_ALERTA[t.status] ?? 15);
@@ -578,15 +686,7 @@ function ticketHTML(t) {
         <span class="kds-mesero">${esc(t.user_name)}</span>
       </div>
       <ul class="kds-items">
-        ${t.items.map(i => `
-          <li class="kds-item ${i.status !== t.status ? 'adelantado' : ''}">
-            <span class="kds-qty">${i.quantity}</span>
-            <span class="kds-nombre">
-              ${esc(i.product_name)}
-              ${i.note ? `<span class="kds-nota">${esc(i.note)}</span>` : ''}
-            </span>
-            ${i.status !== t.status ? `<span class="kds-item-estado">${esc(i.status_label)}</span>` : ''}
-          </li>`).join('')}
+        ${t.items.map(i => itemRowHTML(i, t.items.length)).join('')}
       </ul>
       <footer class="kds-acciones">
         ${t.status !== 'en_espera' ? `
@@ -594,6 +694,82 @@ function ticketHTML(t) {
                   aria-label="Regresar al paso anterior">${icon('back', 14)}</button>` : ''}
         <button class="kds-btn-avanzar" onclick="avanzarComanda('${t.key}')">
           ${icon(accion.icon, 15)}${accion.label}
+        </button>
+      </footer>
+    </article>`;
+}
+
+/** Mitad de una comanda mixta que sigue en la plancha (los platos aún no listos). */
+function ticketCookingHTML(t, items, yaListosCount) {
+  const min      = minutosDesde(t.sent_at);
+  const atrasada = min >= (KDS_ALERTA[t.status] ?? 15);
+  const accion   = KDS_ACCION[t.status];
+
+  return `
+    <article class="kds-ticket ${atrasada ? 'atrasada' : ''}">
+      <header class="kds-ticket-top">
+        <span class="kds-mesa">${esc(t.table_name)}</span>
+        <span class="kds-tiempo ${atrasada ? 'tarde' : ''}">${icon('clock', 12)}${etiquetaMinutos(min)}</span>
+      </header>
+      <div class="kds-meta">
+        <span class="kds-destino">${esc(t.destino)}</span>
+        <span class="kds-orden">#${t.order_id}</span>
+        <span class="kds-mesero">${esc(t.user_name)}</span>
+      </div>
+      <div class="kds-parcial-aviso">
+        ${icon('arrow', 12)}${yaListosCount} ${yaListosCount === 1 ? 'plato pasó' : 'platos pasaron'} a Listo
+      </div>
+      <ul class="kds-items">
+        ${items.map(i => itemRowHTML(i, items.length)).join('')}
+      </ul>
+      <footer class="kds-acciones">
+        ${t.status !== 'en_espera' ? `
+          <button class="kds-btn-atras" onclick="retrocederComanda('${t.key}')"
+                  aria-label="Regresar al paso anterior">${icon('back', 14)}</button>` : ''}
+        <button class="kds-btn-avanzar" onclick="avanzarComanda('${t.key}')">
+          ${icon(accion.icon, 15)}${accion.label}
+        </button>
+      </footer>
+    </article>`;
+}
+
+/**
+ * Mitad de una comanda mixta que ya se puede entregar. El tiempo se cuenta
+ * desde que ESE plato quedó listo, no desde que se envió la comanda entera:
+ * es lo que importa para saber si se está enfriando en la ventanilla.
+ */
+function ticketReadyHTML(t, items) {
+  const readyAts = items.map(i => i.ready_at).filter(Boolean).map(x => new Date(x).getTime());
+  const desde    = readyAts.length ? new Date(Math.min(...readyAts)).toISOString() : t.sent_at;
+  const min      = minutosDesde(desde);
+  const atrasada = min >= (KDS_ALERTA.listo ?? 5);
+  const qty      = items.reduce((s, i) => s + i.quantity, 0);
+
+  return `
+    <article class="kds-ticket kds-ticket-parcial ${atrasada ? 'atrasada' : ''}">
+      <header class="kds-ticket-top">
+        <span class="kds-mesa">${esc(t.table_name)}</span>
+        <span class="kds-tiempo ${atrasada ? 'tarde' : ''}">${icon('clock', 12)}${etiquetaMinutos(min)}</span>
+      </header>
+      <div class="kds-meta">
+        <span class="kds-destino">${esc(t.destino)}</span>
+        <span class="kds-orden">#${t.order_id}</span>
+        <span class="kds-mesero">${esc(t.user_name)}</span>
+        <span class="kds-parcial-tag">Entrega parcial</span>
+      </div>
+      <ul class="kds-items">
+        ${items.map(i => `
+          <li class="kds-item">
+            <span class="kds-qty">${i.quantity}</span>
+            <span class="kds-nombre">
+              ${esc(i.product_name)}
+              ${i.note ? `<span class="kds-nota">${esc(i.note)}</span>` : ''}
+            </span>
+          </li>`).join('')}
+      </ul>
+      <footer class="kds-acciones">
+        <button class="kds-btn-avanzar" onclick="entregarListos('${t.key}')">
+          ${icon('arrow', 15)}Entregar (${qty})
         </button>
       </footer>
     </article>`;
@@ -616,10 +792,28 @@ async function avanzarComanda(key) {
 async function retrocederComanda(key) {
   const t = buscarTicket(key);
   if (!t) return;
-  const previo = { preparando: 'en_espera', listo: 'preparando' }[t.status];
-  if (!previo) return;
-  const res = await window.api.kitchen.setTicket(t.order_id, t.sent_at, t.destino, previo);
+  const res = await window.api.kitchen.retreat(t.order_id, t.sent_at, t.destino);
   if (res.success === false) { showToast(res.error || 'No se pudo regresar', 'error'); return; }
+  await loadCocina();
+}
+
+/**
+ * Entrega solo lo que ya está listo en una comanda mixta, sin esperar al
+ * plato atrasado. Ese plato se queda en el tablero hasta que también esté.
+ */
+async function entregarListos(key) {
+  const t = buscarTicket(key);
+  if (!t) return;
+  const res = await window.api.kitchen.deliverReady(t.order_id, t.sent_at, t.destino);
+  if (res.success === false) { showToast(res.error || 'No se pudo entregar', 'error'); return; }
+  showToast(`${t.table_name} · ${res.count} ${res.count === 1 ? 'plato entregado' : 'platos entregados'}`, 'success');
+  await loadCocina();
+}
+
+/** Marca un solo plato como listo sin esperar al resto del pedido. */
+async function marcarItemListo(itemId) {
+  const res = await window.api.kitchen.setItem(itemId, 'listo');
+  if (res.success === false) { showToast(res.error || 'No se pudo marcar', 'error'); return; }
   await loadCocina();
 }
 
@@ -1141,7 +1335,7 @@ function showReceipt(order, cobro) {
   el.innerHTML = `
     <div class="receipt-header">
       <h2>LA TABERNA</h2>
-      <p>Barra y Restaurante · Powered by El Primo</p>
+      <p>Barra y Restaurante · Powered by GerionTech</p>
     </div>
     <hr class="receipt-divider">
     <div class="receipt-meta">
@@ -1658,6 +1852,10 @@ function initHistoryView() {
     document.getElementById('wh-date-from').value = today;
     document.getElementById('wh-date-to').value   = today;
   }
+  if (!document.getElementById('coc-hist-date-from').value) {
+    document.getElementById('coc-hist-date-from').value = today;
+    document.getElementById('coc-hist-date-to').value   = today;
+  }
   loadHistory();
 }
 
@@ -1679,7 +1877,8 @@ function showHistorialTab(tab) {
 
   const titles = {
     cobros:  ['Historial de Cobros',  'Órdenes cerradas y corte de caja'],
-    meseros: ['Historial de Meseros', 'Ventas y órdenes por mesero']
+    meseros: ['Historial de Meseros', 'Ventas y órdenes por mesero'],
+    cocina:  ['Historial de Cocina',  'Comandas enviadas a cocina y barra, por día']
   };
   const [title, sub] = titles[tab];
   document.getElementById('history-section-title').textContent = title;
@@ -1687,6 +1886,7 @@ function showHistorialTab(tab) {
 
   showMainView('history');
   if (tab === 'meseros') loadWaiterHistory();
+  if (tab === 'cocina')  loadKitchenHistory();
 }
 
 // ── Historial de Meseros ─────────────────────────────────────────────────────
@@ -1778,6 +1978,176 @@ function toggleWaiterCard(gId) {
   const chv = document.getElementById(`${gId}-chev`);
   const open = el.classList.toggle('open');
   chv.classList.toggle('open', open);
+}
+
+// ── Historial de Cocina ───────────────────────────────────────────────────────
+async function loadKitchenHistory() {
+  const dateFrom = document.getElementById('coc-hist-date-from').value || null;
+  const dateTo   = document.getElementById('coc-hist-date-to').value   || null;
+  State.kitchenHistoryFilter = 'todas';   // cada búsqueda nueva arranca sin filtro activo
+  const days = await window.api.kitchen.historyByDay(dateFrom, dateTo);
+  renderKitchenHistory(days);
+}
+
+function clearKitchenHistoryFilters() {
+  document.getElementById('coc-hist-date-from').value = '';
+  document.getElementById('coc-hist-date-to').value   = '';
+  loadKitchenHistory();
+}
+
+function renderKitchenHistory(days) {
+  State.kitchenHistoryDays = days;   // se guarda crudo: cambiar de filtro es solo repintar
+  paintKitchenHistory();
+}
+
+/** Elige el filtro activo (tarjetas de resumen) sin volver a pedir datos al backend. */
+function setKitchenHistoryFilter(filtro) {
+  State.kitchenHistoryFilter = filtro;
+  paintKitchenHistory();
+}
+
+function paintKitchenHistory() {
+  const days   = State.kitchenHistoryDays;
+  const filtro = State.kitchenHistoryFilter;
+  const summaryEl = document.getElementById('kitchen-history-summary');
+  const listEl    = document.getElementById('kitchen-history-list');
+
+  if (!days.length) {
+    summaryEl.innerHTML = '';
+    listEl.innerHTML = '<p class="hist-empty">No hay comandas en el período seleccionado.</p>';
+    return;
+  }
+
+  const todas    = days.flatMap(d => d.tickets);
+  const aTiempo  = todas.filter(t => t.status === 'entregado' && !t.tardio).length;
+  const tardias  = todas.filter(t => t.tardio).length;
+
+  const tarjeta = (id, valor, label, extra) => `
+    <button type="button" class="hist-stat-card hist-stat-card-btn ${extra} ${filtro === id ? 'active' : ''}"
+            onclick="setKitchenHistoryFilter('${id}')" aria-pressed="${filtro === id}">
+      <div class="hist-stat-value">${valor}</div>
+      <div class="hist-stat-label">${label}</div>
+    </button>`;
+
+  summaryEl.innerHTML =
+    tarjeta('todas',    todas.length, 'Comandas enviadas',   '') +
+    tarjeta('a_tiempo', aTiempo,      'Entregadas a tiempo', 'green') +
+    tarjeta('tardias',  tardias,      'Tardías',             tardias ? 'red' : '');
+
+  const coincide = t => filtro === 'a_tiempo' ? (t.status === 'entregado' && !t.tardio)
+                       : filtro === 'tardias'  ? t.tardio
+                       : true;
+
+  const diasFiltrados = days
+    .map(day => ({ ...day, tickets: day.tickets.filter(coincide) }))
+    .filter(day => day.tickets.length > 0);
+
+  if (!diasFiltrados.length) {
+    const vacios = {
+      a_tiempo: 'No hay comandas entregadas a tiempo en el período.',
+      tardias:  'No hay comandas tardías en el período.'
+    };
+    listEl.innerHTML = `<p class="hist-empty">${vacios[filtro] || 'Sin comandas.'}</p>`;
+    return;
+  }
+
+  listEl.innerHTML = diasFiltrados.map(day => {
+    const dId = `kh-${day.date}`;
+    const entregadas = day.tickets.filter(t => t.status === 'entregado').length;
+    const tardiasDia = day.tickets.filter(t => t.tardio).length;
+    return `
+    <div class="hist-order-card">
+      <div class="hist-order-header" onclick="toggleKitchenDay('${dId}')">
+        <div class="hist-order-meta">
+          <span class="hist-order-table">${fmtDateStr(day.date)}</span>
+          <span class="hist-order-user">${day.tickets.length} ${day.tickets.length === 1 ? 'comanda' : 'comandas'}</span>
+          ${tardiasDia ? `<span class="kh-badge-tardio">${tardiasDia} tardía${tardiasDia === 1 ? '' : 's'}</span>` : ''}
+        </div>
+        <div class="hist-order-right">
+          <span class="hist-order-total">${entregadas}/${day.tickets.length} entregadas</span>
+          <span class="hist-chevron" id="${dId}-chev">${icon('chevron', 16)}</span>
+        </div>
+      </div>
+      <div class="hist-order-items" id="${dId}-body">
+        ${day.tickets.map(t => kitchenTicketRow(t)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function kitchenTicketRow(t) {
+  const [datePart, timePart] = formatDateTime(t.sent_at);
+
+  // El plato responsable del atraso: solo tiene sentido señalarlo cuando
+  // NO son todos — si toda la comanda comparte el mismo destino final,
+  // no hubo un plato que frenara a otro, tardó pareja.
+  const culpableIds = new Set(t.culprit_ids || []);
+  const hayCulpable  = t.tardio && culpableIds.size > 0 && culpableIds.size < t.items.length;
+  const nombresCulpables = hayCulpable
+    ? t.items.filter(i => culpableIds.has(i.id)).map(i => i.product_name).join(', ')
+    : '';
+
+  return `
+    <div class="kh-ticket ${t.tardio ? 'tardio' : ''}">
+      <div class="kh-ticket-head">
+        <span class="kh-mesa">${esc(t.table_name)}</span>
+        <span class="kh-destino">${esc(t.destino)}</span>
+        <span class="kh-orden">#${t.order_id}</span>
+        <span class="kh-mesero">${icon('user', 12)}${esc(t.user_name)}</span>
+        <span class="kh-hora">${icon('clock', 12)}${timePart}</span>
+        <span class="kh-estado kh-estado-${t.status}">${esc(t.status_label)}</span>
+        ${t.tardio ? `<span class="kh-tardio-tag">Tardía</span>` : ''}
+        ${t.cerrada_sin_entregar ? `<span class="kh-cerrada-tag">Cuenta cerrada sin marcar</span>` : ''}
+        <span class="kh-minutos">${
+          t.status === 'entregado'      ? `${t.minutos} min`
+          : t.cerrada_sin_entregar      ? `${t.minutos} min hasta el cobro`
+          :                                `en curso · ${t.minutos} min`
+        }</span>
+        ${t.order_status !== 'abierta' ? `
+          <button class="hist-del-btn" onclick="deleteFromKitchenHistory(${t.order_id}, '#${t.order_id} ${esc(t.table_name)}')"
+                  title="Eliminar orden" aria-label="Eliminar orden #${t.order_id}">${icon('trash', 15)}</button>` : ''}
+      </div>
+      ${hayCulpable ? `<div class="kh-culprit-aviso">${icon('clock', 12)}Atrasó: ${esc(nombresCulpables)}</div>` : ''}
+      <ul class="kh-items">
+        ${t.items.map(i => `
+          <li class="${culpableIds.has(i.id) && hayCulpable ? 'kh-item-culprit' : ''}">
+            <span class="kh-qty">${i.quantity}×</span>
+            <span>${esc(i.product_name)}${i.note ? `<span class="kh-nota"> — ${esc(i.note)}</span>` : ''}</span>
+            <span class="kh-item-estado">${esc(i.status_label)}</span>
+          </li>`).join('')}
+      </ul>
+    </div>`;
+}
+
+/**
+ * Elimina la orden completa desde el historial de cocina — misma operación
+ * que "Eliminar" en Historial de Cobros, así que también desaparece de ahí:
+ * es el mismo registro visto desde dos pantallas, no dos copias.
+ */
+function deleteFromKitchenHistory(orderId, label) {
+  document.getElementById('confirm-title').textContent   = 'Eliminar orden del historial';
+  document.getElementById('confirm-message').textContent =
+    `¿Eliminar la orden ${label}? Se borra la orden completa, con todas sus comandas de cocina y barra, ` +
+    `y también desaparece del Historial de Cobros. Esta acción no se puede deshacer.`;
+
+  const btn = document.getElementById('btn-confirm-ok');
+  btn.onclick = async () => {
+    closeModal('modal-confirm');
+    const res = await window.api.orders.delete(orderId);
+    if (res && res.success === false) {
+      showToast(res.error || 'No se pudo eliminar', 'error'); return;
+    }
+    showToast('Orden eliminada del historial', 'success');
+    loadKitchenHistory();
+  };
+  openModal('modal-confirm');
+}
+
+function toggleKitchenDay(dId) {
+  const body = document.getElementById(`${dId}-body`);
+  const chev = document.getElementById(`${dId}-chev`);
+  const open = body.classList.toggle('open');
+  chev.classList.toggle('open', open);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -2229,6 +2599,7 @@ function esc(str) {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+    closeUserMenu();
   }
 });
 

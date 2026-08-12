@@ -267,12 +267,29 @@ select:focus-visible,
   padding: 16px;
   border-top: 1px solid rgba(255,255,255,.08);
 }
+
+.user-menu-wrap { position: relative; }
+
+/* Antes era un <div>; ahora es el botón que abre el menú de cuenta.
+   Mismo layout que siempre, solo con los resets propios de <button>. */
 .user-card {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
   margin-bottom: 12px;
+  /* Solo vertical: crece al piso táctil de 44px sin mover el avatar del borde */
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--dur-press) var(--ease-out);
 }
+.user-card:active { transform: scale(.98); }
+
 .user-avatar {
   width: 36px; height: 36px;
   background: var(--accent);
@@ -281,9 +298,59 @@ select:focus-visible,
   font-weight: 700; font-size: 15px;
   flex-shrink: 0;
 }
-.user-info { overflow: hidden; }
+.user-info { overflow: hidden; flex: 1; }
 .user-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .user-role { font-size: 11px; color: rgba(255,255,255,.5); text-transform: capitalize; }
+
+.user-menu-chevron {
+  flex-shrink: 0;
+  display: inline-flex;
+  color: rgba(255,255,255,.45);
+  transition: transform var(--dur) var(--ease-out);
+}
+.user-menu-chevron.open { transform: rotate(180deg); }
+
+/* Flota sobre el resto de la barra lateral: por eso lleva sombra, igual
+   que un modal o un toast — no vive dentro del flujo de la página. */
+.user-menu {
+  display: none;
+  position: absolute;
+  left: 0; right: 0;
+  bottom: calc(100% + 8px);
+  background: var(--card-bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: var(--shadow-float);
+  padding: 6px;
+  z-index: 20;
+  animation: modalIn var(--dur-slow) var(--ease-out);
+}
+.user-menu.open { display: block; }
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+.user-menu-item svg { flex-shrink: 0; color: var(--text-light); }
+.user-menu-item:active { transform: scale(.97); }
+@media (hover: hover) and (pointer: fine) {
+  .user-menu-item:hover { background: var(--accent-soft); color: var(--accent-dark); }
+  .user-menu-item:hover svg { color: var(--accent-dark); }
+}
 
 .btn-logout {
   display: flex;
@@ -1373,6 +1440,31 @@ select:focus-visible,
   background: oklch(97.6% .026 152);
   border-color: oklch(90% .06 152);
 }
+
+/* Tarjeta-botón: filtra la lista de abajo sin volver a pedir datos.
+   El azul de "seleccionado" es el mismo que cualquier otro filtro activo
+   de la app; el color de fondo (verde/rojo) sigue contando su propia historia. */
+.hist-stat-card-btn {
+  display: block;
+  width: auto;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+.hist-stat-card-btn:active { transform: scale(.97); }
+@media (hover: hover) and (pointer: fine) {
+  .hist-stat-card-btn:hover { border-color: var(--line-strong); }
+}
+/* Calificado con el elemento para ganarle a .hist-stat-card.red/.green,
+   que están más abajo en la hoja y comparten la misma especificidad. */
+button.hist-stat-card-btn.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+button.hist-stat-card-btn.active .hist-stat-value,
+button.hist-stat-card-btn.active .hist-stat-label { color: var(--accent-dark); }
 
 .hist-stat-value {
   font-size: 26px;
@@ -2740,7 +2832,6 @@ select:focus-visible,
   border-bottom: 1px solid var(--line);
 }
 .kds-item:last-child { border-bottom: none; }
-.kds-item.adelantado { opacity: .55; }
 
 .kds-qty {
   flex-shrink: 0;
@@ -2771,13 +2862,32 @@ select:focus-visible,
   font-style: italic;
   color: var(--danger-dark);
 }
-.kds-item-estado {
+/* Marcar un plato suelto como listo, sin frenar por el resto del pedido.
+   Es cocina en plena hora pico: 44px como cualquier otro control de servicio. */
+.kds-item-listo {
   flex-shrink: 0;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .4px;
-  text-transform: uppercase;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
   color: var(--muted);
+  cursor: pointer;
+  transition: border-color var(--dur) var(--ease-out),
+              color var(--dur) var(--ease-out),
+              background-color var(--dur) var(--ease-out),
+              transform var(--dur-press) var(--ease-out);
+}
+.kds-item-listo:active { transform: scale(.92); }
+@media (hover: hover) and (pointer: fine) {
+  .kds-item-listo:hover {
+    border-color: var(--success-dark);
+    color: var(--success-dark);
+    background: oklch(72.3% .192 150 / .1);
+  }
 }
 
 .kds-acciones { display: flex; gap: 6px; }
@@ -2847,4 +2957,187 @@ select:focus-visible,
     overflow-y: auto;
   }
   .kds-col { min-height: 200px; }
+}
+
+/* ── Entrega parcial: lo listo pasa de una vez al panel de Listo, lo
+   atrasado se queda cocinándose en el suyo ──────────────────────────── */
+.kds-parcial-tag {
+  padding: 1px 8px;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  border: 1px solid oklch(62.3% .188 260 / .28);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+
+.kds-parcial-aviso {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--text-light);
+}
+.kds-parcial-aviso svg { flex-shrink: 0; opacity: .75; }
+
+/* ── Historial de Cocina ─────────────────────────────────────────────── */
+.hist-stat-card.red {
+  background: oklch(97.3% .022 25);
+  border-color: oklch(89% .05 25);
+}
+.hist-stat-card.red .hist-stat-value { color: var(--danger-dark); }
+
+.kh-badge-tardio {
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: oklch(97.3% .022 25);
+  border: 1px solid oklch(89% .05 25);
+  color: var(--danger-dark);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.kh-ticket {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.kh-ticket:last-child { border-bottom: none; }
+.kh-ticket:first-child { padding-top: 16px; }
+
+.kh-ticket-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.kh-mesa { font-size: 14px; font-weight: 700; color: var(--text); }
+.kh-destino {
+  padding: 1px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface-2);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+.kh-orden, .kh-mesero, .kh-hora {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.kh-mesero svg, .kh-hora svg { opacity: .75; }
+
+.kh-estado {
+  padding: 1px 8px;
+  border-radius: 20px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  background: var(--surface-2);
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+.kh-estado-entregado { background: oklch(97.6% .026 152); color: var(--success-dark); border-color: oklch(90% .06 152); }
+.kh-estado-listo,
+.kh-estado-preparando,
+.kh-estado-en_espera { background: var(--accent-soft); color: var(--accent-dark); border-color: oklch(62.3% .188 260 / .28); }
+
+.kh-tardio-tag {
+  padding: 1px 8px;
+  border-radius: 20px;
+  background: oklch(63.7% .208 25 / .12);
+  color: var(--danger-dark);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+
+/* Cuenta ya cobrada cuyo plato nunca se marcó en el tablero: es un hueco de
+   registro, no una comanda activa — por eso va neutro, no rojo. */
+.kh-cerrada-tag {
+  padding: 1px 8px;
+  border-radius: 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--text-light);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+}
+
+.kh-minutos {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-light);
+  font-variant-numeric: tabular-nums;
+}
+.kh-ticket.tardio .kh-minutos { color: var(--danger-dark); }
+
+/* Qué plato específico frenó al resto de la comanda. Solo aparece cuando
+   hay un culpable real, no cuando toda la comanda tardó por igual. */
+.kh-culprit-aviso {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 4px 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--danger-dark);
+}
+.kh-culprit-aviso svg { flex-shrink: 0; opacity: .8; }
+
+.kh-items li.kh-item-culprit {
+  margin: 0 -6px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: oklch(63.7% .208 25 / .08);
+}
+
+.kh-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.kh-items li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+.kh-qty {
+  flex-shrink: 0;
+  min-width: 26px;
+  font-weight: 700;
+  color: var(--text-light);
+  font-variant-numeric: tabular-nums;
+}
+.kh-nota {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-light);
+}
+.kh-item-estado {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  color: var(--muted);
 }

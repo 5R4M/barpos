@@ -13,7 +13,8 @@ contextBridge.exposeInMainWorld('api', {
     list:   ()        => ipcRenderer.invoke('users:list'),
     create: (d)       => ipcRenderer.invoke('users:create', d),
     update: (id, d)   => ipcRenderer.invoke('users:update', id, d),
-    delete: (id)      => ipcRenderer.invoke('users:delete', id)
+    delete: (id)      => ipcRenderer.invoke('users:delete', id),
+    changePassword: (id, cur, nueva) => ipcRenderer.invoke('users:changePassword', id, cur, nueva)
   },
   categories: {
     list:   ()        => ipcRenderer.invoke('categories:list'),
@@ -34,11 +35,14 @@ contextBridge.exposeInMainWorld('api', {
     delete: (id)      => ipcRenderer.invoke('tables:delete', id)
   },
   kitchen: {
-    tickets:   (destino)                        => ipcRenderer.invoke('kitchen:tickets', destino),
-    counts:    ()                               => ipcRenderer.invoke('kitchen:counts'),
-    advance:   (orderId, sentAt, destino)       => ipcRenderer.invoke('kitchen:advance', orderId, sentAt, destino),
-    setTicket: (orderId, sentAt, destino, st)   => ipcRenderer.invoke('kitchen:setTicket', orderId, sentAt, destino, st),
-    setItem:   (itemId, status)                 => ipcRenderer.invoke('kitchen:setItem', itemId, status)
+    tickets:      (destino)                  => ipcRenderer.invoke('kitchen:tickets', destino),
+    counts:       ()                         => ipcRenderer.invoke('kitchen:counts'),
+    advance:      (orderId, sentAt, destino) => ipcRenderer.invoke('kitchen:advance', orderId, sentAt, destino),
+    retreat:      (orderId, sentAt, destino) => ipcRenderer.invoke('kitchen:retreat', orderId, sentAt, destino),
+    deliverReady: (orderId, sentAt, destino) => ipcRenderer.invoke('kitchen:deliverReady', orderId, sentAt, destino),
+    setItem:      (itemId, status)           => ipcRenderer.invoke('kitchen:setItem', itemId, status),
+    history:       (dateFrom, dateTo) => ipcRenderer.invoke('kitchen:history', dateFrom, dateTo),
+    historyByDay:  (dateFrom, dateTo) => ipcRenderer.invoke('kitchen:historyByDay', dateFrom, dateTo)
   },
   orders: {
     openList:   ()                                 => ipcRenderer.invoke('orders:openList'),
