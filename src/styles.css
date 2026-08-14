@@ -581,6 +581,8 @@ select:focus-visible,
   font-variant-numeric: tabular-nums;
 }
 .tc-time svg { opacity: .65; flex-shrink: 0; }
+.tc-time-espera { color: var(--danger-dark); font-weight: 700; }
+.tc-time-espera svg { opacity: 1; }
 
 .tc-hint {
   display: inline-flex;
@@ -1164,8 +1166,9 @@ select:focus-visible,
   font-weight: 700;
   text-transform: capitalize;
 }
-.badge-admin    { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
-.badge-user     { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.badge-admin, .badge-admin_general { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+.badge-user, .badge-mesero { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.badge-bartender, .badge-cocinero { background: var(--surface-2); color: var(--text-light); border: 1px solid var(--line-strong); }
 .badge-active   { background: #f0fdf4; color: var(--success-dark); border: 1px solid #bbf7d0; }
 .badge-inactive { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
 .badge-libre    { background: #f0fdf4; color: var(--success-dark); border: 1px solid #bbf7d0; }

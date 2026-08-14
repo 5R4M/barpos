@@ -30,8 +30,12 @@ const State = {
   editTable:      null,
   editUser:       null,
   pendingConfirm: null,
-  historyOrders:  []
+  historyOrders:  [],
+  waitingNotified: new Set()  // ids de mesa ya avisadas por espera sin pedido, hasta que se libere o pidan algo
 };
+
+// Minutos ocupada sin ningún ítem antes de marcarla "esperando pedido"
+const WAITING_ORDER_THRESHOLD_MIN = 10;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AUTH
@@ -58,11 +62,11 @@ async function handleLogin(e) {
 
     State.user = user;
     document.getElementById('sidebar-name').textContent = user.full_name;
-    document.getElementById('sidebar-role').textContent = user.role === 'admin' ? 'Administrador' : 'Mesero';
+    document.getElementById('sidebar-role').textContent = ROLE_LABELS[user.role] || 'Mesero';
     document.getElementById('user-avatar').textContent  = user.full_name.charAt(0).toUpperCase();
 
     // Mostrar/ocultar árbol admin según rol
-    const isAdmin = user.role === 'admin';
+    const isAdmin = isAdminRole(user.role);
     const adminTree   = document.getElementById('nav-admin-tree');
     const historyTree = document.getElementById('nav-history-tree');
     if (adminTree)   adminTree.style.display   = isAdmin ? 'block' : 'none';
@@ -220,10 +224,10 @@ const TYPE_LABEL        = { bebida: 'Bebida',  boquita: 'Boquita',  comida: 'Com
 const TYPE_LABEL_PLURAL = { bebida: 'Bebidas', boquita: 'Boquitas', comida: 'Comida' };
 const TYPE_ORDER        = { bebida: 0, boquita: 1, comida: 2 };
 
-function showMainView(name) {
+async function showMainView(name) {
   // Historial y administración solo para admins
   const soloAdmin = name === 'history' || !!ADMIN_ROUTES[name];
-  if (soloAdmin && State.user && State.user.role !== 'admin') return;
+  if (soloAdmin && State.user && !isAdminRole(State.user.role)) return;
 
   // Si se navega desde una orden abierta usando cualquier ítem del menú
   // lateral (no solo el botón Volver), hay que soltar su estado — si no,
@@ -232,6 +236,7 @@ function showMainView(name) {
   // en memoria; los ítems agregados siguen "pendientes" en la base tal cual
   // se dejaron, listos para retomarse al volver a abrir esa mesa.
   if (document.getElementById('view-order').classList.contains('active')) {
+    await releaseIfEmptyOrder();
     State.currentOrderId = null;
     State.currentOrder   = null;
     State.categoryFilter = null;
@@ -307,6 +312,17 @@ const ICON_PATHS = {
 const PAYMENT_LABELS = { efectivo: 'Efectivo', tarjeta: 'Tarjeta', transferencia: 'Transferencia' };
 const PAYMENT_ICONS  = { efectivo: 'cash', tarjeta: 'card', transferencia: 'swap' };
 
+// Roles de usuario. Espejo de ROLES/ADMIN_ROLES en database.js.
+const ROLE_LABELS = {
+  mesero:        'Mesero',
+  bartender:     'Bartender',
+  cocinero:      'Cocinero',
+  admin_general: 'Administrador General',
+  admin:         'Super Administrador'
+};
+const ADMIN_ROLES = ['admin', 'admin_general'];
+const isAdminRole = role => ADMIN_ROLES.includes(role);
+
 // Sugerencias frecuentes para la nota de un ítem, para no teclear en la tablet.
 const NOTE_SUGGESTIONS = [
   'Sin hielo', 'Sin cebolla', 'Sin picante', 'Término medio',
@@ -339,6 +355,29 @@ function elapsedLabel(iso) {
   return `${Math.floor(mins / 60)} h ${mins % 60} min`;
 }
 
+// Avisa una sola vez por mesa cuando lleva abierta más de
+// WAITING_ORDER_THRESHOLD_MIN sin ningún ítem pedido. Si la mesa pide algo
+// o se libera, sale del set y puede volver a avisar si se reabre y se estanca.
+function checkWaitingTables(tables) {
+  const stillOpen = new Set();
+  for (const t of tables) {
+    if (t.status !== 'ocupada') continue;
+    const order = State.openOrders.find(o => o.table_id === t.id);
+    if (!order || order.item_count) continue;
+    const mins = Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000);
+    if (mins < WAITING_ORDER_THRESHOLD_MIN) continue;
+    stillOpen.add(t.id);
+    if (!State.waitingNotified.has(t.id)) {
+      State.waitingNotified.add(t.id);
+      showToast(`${t.name} lleva ${mins} min abierta sin pedido`, 'error');
+    }
+  }
+  // Limpia las que ya no aplican (se liberaron o ya pidieron algo)
+  for (const id of [...State.waitingNotified]) {
+    if (!stillOpen.has(id)) State.waitingNotified.delete(id);
+  }
+}
+
 function renderTables() {
   const grid = document.getElementById('tables-grid');
   if (!grid) return;
@@ -355,6 +394,8 @@ function renderTables() {
   setTxt('tables-subtitle', all.length
     ? `${all.length} espacios · ${libres} disponibles · ${ocupadas} en servicio`
     : 'Sin espacios configurados');
+
+  checkWaitingTables(all);
 
   const list = tableFilter === 'all' ? all : all.filter(t => t.status === tableFilter);
 
@@ -378,9 +419,18 @@ function renderTables() {
 
     const order = isOcupada ? State.openOrders.find(o => o.table_id === t.id) : null;
 
+    // Mesa abierta hace rato sin que se haya pedido nada: probablemente
+    // esperan a alguien más. Se avisa en la propia tarjeta.
+    const esperaMin = isOcupada && order && !order.item_count
+      ? Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000)
+      : -1;
+    const isEsperando = esperaMin >= WAITING_ORDER_THRESHOLD_MIN;
+
     const foot = isOcupada
       ? `<div class="tc-foot">
-           <span class="tc-time">${icon('clock', 13)}${esc(elapsedLabel(order && order.created_at))}</span>
+           <span class="tc-time ${isEsperando ? 'tc-time-espera' : ''}">${icon('clock', 13)}${
+             isEsperando ? `Esperando pedido · ${esperaMin} min` : esc(elapsedLabel(order && order.created_at))
+           }</span>
            <button class="tc-free" onclick="event.stopPropagation(); confirmarLiberarMesa(${t.id})"
                    aria-label="Liberar ${esc(t.name)}">Liberar</button>
          </div>`
@@ -425,6 +475,12 @@ setInterval(() => {
   if (view && view.classList.contains('active') && State.tables.length) renderTables();
 }, 60000);
 
+// El aviso de "esperando pedido" corre siempre, aunque el mesero esté
+// atendiendo otra mesa y no tenga la grilla de mesas a la vista.
+setInterval(() => {
+  if (State.user && State.tables.length) checkWaitingTables(State.tables);
+}, 60000);
+
 async function openTable(tableId) {
   // ¿hay orden abierta?
   const existingOrder = State.openOrders.find(o => o.table_id === tableId);
@@ -453,7 +509,21 @@ async function openTable(tableId) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
 }
 
-function backToTables() {
+// Si la mesa se abrió pero no se pidió nada, no debe quedar "ocupada" en el
+// tablero: cancela esa orden vacía y libera la mesa antes de salir de la vista.
+async function releaseIfEmptyOrder() {
+  const order = State.currentOrder;
+  if (!order || order.status !== 'abierta') return;
+  if ((order.items || []).length > 0) return;
+  const res = await window.api.orders.cancel(order.id);
+  if (res && res.success !== false) {
+    showToast(`${order.table_name} liberada — no se pidió nada`, 'info');
+    await refreshTables();
+  }
+}
+
+async function backToTables() {
+  await releaseIfEmptyOrder();
   State.currentOrderId = null;
   State.currentOrder   = null;
   State.categoryFilter = null;
@@ -2433,7 +2503,7 @@ function renderUsersTable(users) {
     <tr>
       <td><code>${esc(u.username)}</code></td>
       <td>${esc(u.full_name)}</td>
-      <td><span class="badge badge-${u.role}">${u.role === 'admin' ? 'Admin' : 'Mesero'}</span></td>
+      <td><span class="badge badge-${u.role}">${esc(ROLE_LABELS[u.role] || u.role)}</span></td>
       <td><span class="badge badge-${u.active ? 'active' : 'inactive'}">${u.active ? 'Activo' : 'Inactivo'}</span></td>
       <td class="row-actions">
         <button class="btn btn-outline btn-sm" onclick="openUserModal(${u.id})">${icon('pencil', 13)}Editar</button>
@@ -2452,7 +2522,7 @@ function openUserModal(userId) {
   document.getElementById('user-fullname').value = '';
   document.getElementById('user-username').value = '';
   document.getElementById('user-password').value = '';
-  document.getElementById('user-role').value     = 'user';
+  document.getElementById('user-role').value     = 'mesero';
   document.getElementById('hint-password').classList.add('hidden');
   document.getElementById('user-active-group').style.display = 'none';
   document.getElementById('user-password').required = true;

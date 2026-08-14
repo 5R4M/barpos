@@ -11,6 +11,18 @@ const { app } = require('electron');
 
 let db;
 
+// ── Roles ─────────────────────────────────────────────────────────────────────
+// admin = super administrador (dueño/gerencia, acceso total).
+// admin_general = administración del día a día, mismo acceso de panel que admin.
+const ROLES = {
+  mesero:        'Mesero',
+  bartender:     'Bartender',
+  cocinero:      'Cocinero',
+  admin_general: 'Administrador General',
+  admin:         'Super Administrador'
+};
+const ADMIN_ROLES = ['admin', 'admin_general'];
+
 // ─────────────────────────────────────────────────────────────────────────────
 function initDB() {
   const dbPath  = path.join(app.getPath('userData'), 'barpos.json');
@@ -34,6 +46,11 @@ function initDB() {
   if (!db.has('_seq.voids').value()) db.set('_seq.voids', 0).write();
 
   if (db.get('users').size().value() === 0) seedData();
+
+  // Bases creadas cuando solo existían los roles 'admin'/'user': 'user' pasa a 'mesero'.
+  db.get('users').value().filter(u => u.role === 'user').forEach(u => {
+    db.get('users').find({ id: u.id }).assign({ role: 'mesero' }).write();
+  });
 
   syncCatalog();
 }
@@ -304,7 +321,7 @@ function seedData() {
   db.get('users').push({
     id: nextId('users'), username: 'mesero',
     password: bcrypt.hashSync('user123', 10),
-    full_name: 'Mesero', role: 'user', active: true, created_at: now()
+    full_name: 'Mesero', role: 'mesero', active: true, created_at: now()
   }).write();
 
   // Categorías y productos los siembra syncCatalog() a partir de CATALOG.
@@ -346,6 +363,8 @@ function getUsers() {
 function createUser(data) {
   if (db.get('users').find({ username: data.username }).value())
     return { success: false, error: 'El nombre de usuario ya existe' };
+  if (!ROLES[data.role])
+    return { success: false, error: 'Rol inválido' };
   const id = nextId('users');
   db.get('users').push({
     id,
@@ -362,6 +381,8 @@ function createUser(data) {
 function updateUser(id, data) {
   const user = db.get('users').find({ id }).value();
   if (!user) return { success: false, error: 'Usuario no encontrado' };
+  if (!ROLES[data.role])
+    return { success: false, error: 'Rol inválido' };
   const updates = { full_name: data.full_name, role: data.role, active: data.active };
   if (data.password) updates.password = bcrypt.hashSync(data.password, 10);
   db.get('users').find({ id }).assign(updates).write();
@@ -1283,5 +1304,6 @@ module.exports = {
   deliverReadyItems, setItemStatus, getKitchenHistory, getKitchenHistoryByDay,
   closeOrder, cancelOrder, deleteOrder,
   getOrderHistory, getWaiterHistory, getPaymentBreakdown, getVoids,
-  PAYMENT_METHODS, PAYMENT_LABELS, TAX_RATE, ESTADO_LABEL
+  PAYMENT_METHODS, PAYMENT_LABELS, TAX_RATE, ESTADO_LABEL,
+  ROLES, ADMIN_ROLES
 };
