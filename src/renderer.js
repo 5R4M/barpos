@@ -1807,6 +1807,7 @@ function buildCorteMesas(orders) {
             </div>
           </div>
           <div id="cmt-orders-${safeId}" class="cmt-orders-panel">
+           <div class="cmt-orders-inner">
             <div class="cmt-prod-summary">
               <h5>Resumen de productos</h5>
               <table class="corte-table">
@@ -1817,6 +1818,7 @@ function buildCorteMesas(orders) {
             </div>
             <h5 class="cmt-ord-ttl">Órdenes cobradas</h5>
             ${ordRows}
+           </div>
           </div>
         </div>`;
     }).join('');

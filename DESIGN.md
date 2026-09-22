@@ -2,16 +2,19 @@
 name: BarPOS — La Taberna
 description: Sistema de punto de venta para bar y restaurante, operado a dedo en un local a media luz.
 colors:
-  accent-azul: "oklch(62.3% 0.188 260)"
-  accent-azul-profundo: "oklch(54.6% 0.215 263)"
+  accent-azul: "oklch(56.3% 0.188 260)"
+  accent-azul-profundo: "oklch(50.3% 0.200 262)"
   accent-azul-tenue: "oklch(93.8% 0.028 256)"
-  verde-cobro: "oklch(72.3% 0.192 150)"
-  verde-cobro-profundo: "oklch(62.7% 0.170 149)"
-  rojo-ocupada: "oklch(63.7% 0.208 25)"
-  rojo-ocupada-profundo: "oklch(57.7% 0.215 27)"
+  accent-azul-tenue-borde: "oklch(84% 0.06 256)"
+  verde-cobro: "oklch(52.3% 0.190 149)"
+  verde-cobro-profundo: "oklch(44.0% 0.180 149)"
+  rojo-ocupada: "oklch(57.7% 0.208 25)"
+  rojo-ocupada-profundo: "oklch(51.7% 0.215 26)"
+  rojo-ocupada-tenue: "oklch(84.0% 0.045 22)"
+  nav-item-active-borde: "rgba(147,197,253,0.28)"
   navy-panel: "oklch(31.8% 0.089 262)"
   tinta: "oklch(27.9% 0.037 260)"
-  gris-pizarra: "oklch(55.4% 0.041 257)"
+  gris-pizarra: "oklch(50.0% 0.041 257)"
   blanco-azulado: "oklch(99.4% 0.002 258)"
   superficie-elevada: "oklch(97.7% 0.005 256)"
   fondo-azulado: "oklch(96.8% 0.014 254)"
@@ -30,6 +33,12 @@ typography:
     fontWeight: 700
     lineHeight: 1.2
     letterSpacing: "-0.3px"
+  panel-title:
+    fontFamily: "Segoe UI Variable Text, Segoe UI, Inter, system-ui, sans-serif"
+    fontSize: "17px"
+    fontWeight: 700
+    lineHeight: 1.2
+    letterSpacing: "normal"
   title:
     fontFamily: "Segoe UI Variable Text, Segoe UI, Inter, system-ui, sans-serif"
     fontSize: "14.5px"
@@ -48,6 +57,12 @@ typography:
     fontWeight: 700
     lineHeight: 1.2
     letterSpacing: "0.6px"
+  meta:
+    fontFamily: "Segoe UI Variable Text, Segoe UI, Inter, system-ui, sans-serif"
+    fontSize: "12.5px"
+    fontWeight: 600
+    lineHeight: 1.3
+    letterSpacing: "normal"
   data:
     fontFamily: "Segoe UI Variable Text, Segoe UI, Inter, system-ui, sans-serif"
     fontSize: "22px"
@@ -55,9 +70,31 @@ typography:
     lineHeight: 1
     letterSpacing: "-0.5px"
     fontFeature: "tabular-nums"
+  total:
+    fontFamily: "Segoe UI Variable Text, Segoe UI, Inter, system-ui, sans-serif"
+    fontSize: "18px"
+    fontWeight: 800
+    lineHeight: 1
+    letterSpacing: "-0.4px"
+    fontFeature: "tabular-nums"
+  stat:
+    fontFamily: "Segoe UI Variable Text, Segoe UI, Inter, system-ui, sans-serif"
+    fontSize: "26px"
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: "-0.5px"
+    fontFeature: "tabular-nums"
+  brand-mark:
+    fontFamily: "Segoe UI Variable Text, Segoe UI, Inter, system-ui, sans-serif"
+    fontSize: "20px"
+    fontWeight: 800
+    lineHeight: 1.2
+    letterSpacing: "-0.5px"
 rounded:
+  xs: "6px"
   sm: "8px"
   md: "9px"
+  base: "10px"
   lg: "12px"
   xl: "14px"
   pill: "20px"
@@ -96,7 +133,7 @@ components:
   button-cobrar:
     backgroundColor: "{colors.verde-cobro}"
     textColor: "{colors.blanco-azulado}"
-    rounded: "{rounded.md}"
+    rounded: "{rounded.base}"
     padding: "15px"
     height: "52px"
     width: "100%"
@@ -123,6 +160,7 @@ components:
   chip-categoria:
     backgroundColor: "{colors.blanco-azulado}"
     textColor: "{colors.gris-pizarra}"
+    typography: "{typography.meta}"
     rounded: "{rounded.pill}"
     padding: "6px 16px"
     height: "40px"
@@ -132,7 +170,7 @@ components:
   nav-item:
     backgroundColor: "transparent"
     textColor: "rgba(255,255,255,0.62)"
-    rounded: "{rounded.md}"
+    rounded: "{rounded.base}"
     padding: "11px 14px"
   nav-item-active:
     backgroundColor: "rgba(59,130,246,0.22)"
@@ -141,7 +179,7 @@ components:
     backgroundColor: "{colors.blanco-azulado}"
     textColor: "{colors.gris-pizarra}"
     rounded: "{rounded.full}"
-    size: "42px"
+    size: "44px"
 ---
 
 # Design System: BarPOS — La Taberna
@@ -172,14 +210,16 @@ Azul de marca frío como única voz de acción, verde y rojo estrictamente semá
 - **Azul Acción**: el único color de acción de la app. Botones primarios, selección activa, foco de teclado, chevrons de `select`, el estado "libre" al pasar el puntero. Reservado a lo que el usuario puede tocar para que algo pase.
 - **Azul Profundo**: el `:hover` del anterior y el color del texto sobre fondos azul tenue. Nunca aparece solo.
 - **Azul Tenue**: relleno de estados sugeridos, no confirmados. Hover de botones de contorno, contador de la pestaña activa, tinte del tile de una mesa libre bajo el puntero.
+- **Azul Tenue Borde**: un paso más saturado que Azul Tenue, para el borde del mismo tile cuando su fondo ya es Azul Tenue — el fondo solo no bastaba para separarlo de la tarjeta.
 
 ### Secondary
-- **Verde Cobro**: dinero que ya entró. Botón COBRAR, totales recaudados, badge de disponible. Nunca se usa como color de marca ni de acento decorativo.
+- **Verde Cobro**: dinero que ya entró. Botón COBRAR, totales recaudados. Nunca se usa como color de marca, de acento decorativo, ni como sinónimo genérico de "activo" o "disponible": esos estados van neutros.
 - **Verde Cobro Profundo**: texto y cifras sobre superficies verde tenue; el `:hover` del botón COBRAR.
 
 ### Tertiary
 - **Rojo Ocupada**: estado ocupado y acción destructiva. Punto de estado de la mesa, botón Liberar, badge del icono de confirmación al eliminar.
 - **Rojo Ocupada Profundo**: el texto rojo real. El rojo claro solo pinta puntos y bordes; cuando hay letra, sube a esta versión para pasar 4.5:1.
+- **Rojo Ocupada Tenue**: el borde compartido de todo botón u tile "destructivo discreto" — Liberar, quitar ítem, eliminar en tablas, el icono del modal de confirmación. Un solo tono en vez de que cada uno inventara el suyo.
 
 ### Neutral
 - **Navy Panel**: fondo de la barra lateral. Segunda capa de neutro, más oscura y más fría que el contenido, que separa navegación de trabajo sin necesidad de una línea divisoria.
@@ -205,13 +245,20 @@ Azul de marca frío como única voz de acción, verde y rojo estrictamente semá
 
 **Character:** La tipografía nativa de Windows, que es donde vive esta app. No pide descarga, no parpadea al cargar, y a 14px en una tablet se lee mejor que cualquier fuente web. La personalidad viene del peso y del espaciado, no de la elección de familia.
 
+**Excepción confirmada — recibo impreso:** el contenido de `.receipt-content` (factura/recibo) usa `Courier New, Courier, monospace` en vez de la familia del sistema, y sus divisores usan gris puro (`#999`) en vez de un neutro con matiz — igual que el borde de `.corte-table` dentro de `@media print` (`#ccc`). Es deliberado: la salida está pensada para leerse como papel impreso —ticket térmico o reporte en hoja blanca—, no como una pantalla de la app, y el papel no lleva el matiz azul de la marca. La excepción vive contenida en esos dos contextos de impresión; no se propaga a ninguna vista en pantalla.
+
 ### Hierarchy
 - **Display** (800, 28px, 1.2, `-0.5px`): solo el nombre "La Taberna" en el login. No aparece dentro de la app.
 - **Headline** (700, 19px, 1.2, `-0.3px`): título de sección en la barra superior. Uno por pantalla, siempre acompañado de un subtítulo de 12.5px con el conteo real.
+- **Panel-title** (700, 17px, 1.2): mismo trabajo que Headline —un título prominente, uno por contenedor— en un espacio más chico: nombre de mesa en el panel de la orden, encabezado de un modal.
 - **Title** (650, 14.5px, 1.35): nombre de mesa, nombre de producto, encabezado de modal. El escalón que el ojo busca dentro de una tarjeta.
 - **Body** (400, 14px, 1.5): texto corrido y contenido de tablas. En prosa, tope de 65-75ch; las tablas de datos pueden correr más anchas.
+- **Meta** (600, 12.5px, 1.3): un escalón real entre Label y Body que la implementación ya usa mucho — chips de categoría, filtros, texto secundario de tarjetas. No es un tamaño improvisado: es el más reusado del sistema después de Body y Label, y por eso se documenta en vez de dejarlo suelto.
 - **Label** (700, 11px, `0.6px`, mayúsculas): cabeceras de tabla, estado de la mesa, etiquetas de filtro. La versalita es lo que convierte una palabra en metadato.
-- **Data** (700, 22-26px, 1, `-0.5px`, `tabular-nums`): total de la orden, total recaudado, órdenes cobradas.
+- **Data** (700, 22px, 1, `-0.5px`, `tabular-nums`): el total de la orden en el panel de cobro — la cifra que más se consulta en el flujo caliente.
+- **Total** (800, 18px, 1, `-0.4px`, `tabular-nums`): la misma idea en un contenedor más chico o más denso — total del recibo impreso, fila de subtotal en una tabla, total por mesero en el historial.
+- **Stat** (700, 26px, 1, `-0.5px`, `tabular-nums`): la cifra ancla de una tarjeta o panel de estadística — corte del día, historial, resumen de cobro.
+- **Brand-mark** (800, 20px, 1.2, `-0.5px`): el nombre "BarPOS" en la barra lateral. Un solo lugar, no se reutiliza.
 
 ### Named Rules
 
@@ -243,6 +290,7 @@ Carácter general: **táctil y sobrio**. Objetivos grandes, respuesta inmediata 
 
 ### Buttons
 - **Shape:** esquinas suaves (8px), altura mínima 40px, iconos SVG a la izquierda del texto con 6px de separación.
+- **Radio base:** un segundo paso de 10px (`rounded.base`) cubre paneles y controles más grandes que un botón de barra — Cobrar, tarjetas del KDS, tickets de comanda —; uno de 6px (`rounded.xs`) es el de las pastillas y etiquetas más chicas — badges de rol, tags de atraso en cocina.
 - **Primary:** relleno Azul Acción, texto Blanco Azulado, `8px 16px`. Para la acción principal de la pantalla, una por vista.
 - **Outline:** transparente con borde Línea Marcada y texto Tinta; en hover pasa a fondo Azul Tenue con texto Azul Profundo. Es el botón por defecto de barras de herramientas.
 - **Ghost danger:** transparente con borde rojo pálido y texto Rojo Profundo, 32px de alto. Para eliminar en filas de tabla: presente pero nunca gritón.
@@ -251,8 +299,12 @@ Carácter general: **táctil y sobrio**. Objetivos grandes, respuesta inmediata 
 
 ### Chips
 - **Style:** pastilla de 20px de radio, borde de 1px, fondo Blanco Azulado, texto Gris Pizarra.
-- **State:** la activa se rellena de Azul Acción con texto blanco. Los tipos de producto (bebida, boquita, comida) tienen su propio relleno al activarse.
+- **State:** la activa se rellena de Azul Acción con texto blanco, sin excepción. Los tipos de producto (bebida, boquita, comida) usan el mismo azul al activarse — un color por tipo fue probado y revertido por la Regla de la Voz Única.
 - **Sub-nivel:** las categorías concretas usan una pastilla más chica (34px de alto, 11.5px) sobre Superficie Elevada, para que se lea como un escalón por debajo de los tipos.
+
+### Badges
+- **Style:** pastilla de 20px de radio, texto 11px en peso 700, capitalizado. Fondo Superficie Elevada, texto Gris Pizarra, borde Línea Marcada — neutro por defecto.
+- **State:** el único badge con color es **Ocupada** (fondo rojo pálido, texto Rojo Profundo); es un estado semántico real, no una etiqueta. Rol, categoría, activo/inactivo y libre son todos neutros: el texto ya dice qué son, y un color ahí sería el cuarto acento que la Regla de la Voz Única prohíbe. **Inactivo** se distingue solo por una opacidad reducida (`.75`), nunca por tono.
 
 ### Cards / Containers
 - **Corner Style:** 14px las tarjetas de mesa, 12px producto, tablas y tarjetas de historial.
