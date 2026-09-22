@@ -14,6 +14,8 @@
   --accent-dark:  oklch(50.3% .200 262);
   --success:      oklch(52.3% .190 149);
   --success-dark: oklch(44.0% .180 149);
+  --success-soft:        oklch(97.6% .026 152);
+  --success-soft-border: oklch(90.0% .060 152);
   --danger:       oklch(57.7% .208  25);
   --danger-dark:  oklch(51.7% .215  26);
   --danger-soft:  oklch(84.0% .045  22);
@@ -155,7 +157,7 @@ select:focus-visible,
   width: 100%;
   padding: 13px;
   background: var(--accent);
-  color: #fff;
+  color: var(--card-bg);
   border: none;
   border-radius: 8px;
   font-size: 15px;
@@ -185,7 +187,7 @@ select:focus-visible,
 .sidebar {
   width: var(--sidebar-w);
   background: var(--sidebar-bg);
-  color: #fff;
+  color: var(--card-bg);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
@@ -199,7 +201,7 @@ select:focus-visible,
   padding: 22px 20px;
   border-bottom: 1px solid rgba(255,255,255,.08);
 }
-.brand-icon { display: flex; color: #fff; }
+.brand-icon { display: flex; color: var(--card-bg); }
 .brand-name { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
 
 .sidebar-nav {
@@ -228,12 +230,12 @@ select:focus-visible,
               transform var(--dur-press) var(--ease-out);
   text-align: left;
 }
-.nav-btn:hover { background: rgba(255,255,255,.07); color: #fff; }
+.nav-btn:hover { background: rgba(255,255,255,.07); color: var(--card-bg); }
 .nav-btn:active { transform: scale(.98); }
 .nav-btn.active {
   background: rgba(59,130,246,.22);
   border-color: rgba(147,197,253,.28);
-  color: #fff;
+  color: var(--card-bg);
   font-weight: 600;
 }
 .nav-icon {
@@ -285,7 +287,7 @@ select:focus-visible,
 .nav-child.active {
   background: rgba(59,130,246,.18);
   border-color: rgba(147,197,253,.22);
-  color: #fff;
+  color: var(--card-bg);
 }
 
 .nav-child-line {
@@ -406,7 +408,7 @@ select:focus-visible,
   font-weight: 600;
   transition: background-color .15s, color .15s, border-color .15s;
 }
-.btn-logout:hover { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.22); color: #fff; }
+.btn-logout:hover { background: rgba(255,255,255,.15); border-color: rgba(255,255,255,.22); color: var(--card-bg); }
 .btn-logout svg { flex-shrink: 0; opacity: .85; }
 
 /* ── Main content ─────────────────────────────────────────── */
@@ -771,7 +773,7 @@ select:focus-visible,
 .cat-filter-btn.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--card-bg);
 }
 
 /* Segunda fila: categorías concretas, un escalón por debajo */
@@ -785,7 +787,7 @@ select:focus-visible,
   color: var(--muted);
 }
 .cat-filter-btn.cat-sub:hover { background: var(--accent-soft); color: var(--accent-dark); border-color: var(--accent); }
-.cat-filter-btn.cat-sub.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.cat-filter-btn.cat-sub.active { background: var(--accent); border-color: var(--accent); color: var(--card-bg); }
 
 .menu-products-grid {
   flex: 1;
@@ -985,7 +987,7 @@ select:focus-visible,
   min-height: 52px;
   padding: 15px;
   background: var(--success);
-  color: #fff;
+  color: var(--card-bg);
   border: none;
   border-radius: 10px;
   font-family: inherit;
@@ -1144,11 +1146,11 @@ select:focus-visible,
 }
 .btn:active { transform: scale(.97); }
 .btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
-.btn-primary   { background: var(--accent);   color: #fff; }
+.btn-primary   { background: var(--accent);   color: var(--card-bg); }
 .btn-primary:hover   { background: var(--accent-dark); }
-.btn-success   { background: var(--success);  color: #fff; }
+.btn-success   { background: var(--success);  color: var(--card-bg); }
 .btn-success:hover   { background: var(--success-dark); }
-.btn-danger    { background: var(--danger);   color: #fff; }
+.btn-danger    { background: var(--danger);   color: var(--card-bg); }
 .btn-danger:hover    { background: var(--danger-dark); }
 
 /* Acción destructiva discreta (filas de tablas) */
@@ -1397,7 +1399,7 @@ select:focus-visible,
   gap: 9px;
   padding: 12px 18px;
   border-radius: 10px;
-  color: #fff;
+  color: var(--card-bg);
   font-size: 13.5px;
   font-weight: 600;
   box-shadow: var(--shadow-float);
@@ -1475,8 +1477,8 @@ select:focus-visible,
   min-width: 160px;
 }
 .hist-stat-card.green {
-  background: oklch(97.6% .026 152);
-  border-color: oklch(90% .06 152);
+  background: var(--success-soft);
+  border-color: var(--success-soft-border);
 }
 
 /* Tarjeta-botón: filtra la lista de abajo sin volver a pedir datos.
@@ -1838,8 +1840,8 @@ button.hist-stat-card-btn.active .hist-stat-label { color: var(--accent-dark); }
   padding: 14px 18px;
 }
 .corte-stat.green {
-  background: oklch(97.6% .026 152);
-  border-color: oklch(90% .06 152);
+  background: var(--success-soft);
+  border-color: var(--success-soft-border);
 }
 .corte-stat-val {
   font-size: 26px;
@@ -1897,7 +1899,7 @@ button.hist-stat-card-btn.active .hist-stat-label { color: var(--accent-dark); }
 .corte-table .right    { text-align: right; }
 .corte-table .bold     { font-weight: 700; }
 .corte-total-row td {
-  background: oklch(97.6% .026 152);
+  background: var(--success-soft);
   font-weight: 700;
   font-size: 14px;
   color: var(--success-dark);
@@ -2026,16 +2028,16 @@ button.hist-stat-card-btn.active .hist-stat-label { color: var(--accent-dark); }
 
 /* ── Órdenes dentro de la tarjeta ────────────────────────── */
 .wh-orders-list {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height .3s var(--ease-out);
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-slow) var(--ease-out), border-color var(--dur-slow) var(--ease-out);
   border-top: 1px solid transparent;
 }
 .wh-orders-list.open {
-  max-height: 1400px;
-  overflow-y: auto;
+  grid-template-rows: 1fr;
   border-top-color: var(--line);
 }
+.wh-orders-inner { overflow: hidden; min-height: 0; }
 
 .wh-order-row {
   display: flex;
@@ -2981,7 +2983,7 @@ button.hist-stat-card-btn.active .hist-stat-label { color: var(--accent-dark); }
   padding: 1px 7px;
   border-radius: 20px;
   background: oklch(100% 0 0 / .16);
-  color: #fff;
+  color: var(--card-bg);
   font-size: 11px;
   font-weight: 700;
   text-align: center;
@@ -3086,7 +3088,7 @@ button.hist-stat-card-btn.active .hist-stat-label { color: var(--accent-dark); }
   color: var(--muted);
   border: 1px solid var(--line);
 }
-.kh-estado-entregado { background: oklch(97.6% .026 152); color: var(--success-dark); border-color: oklch(90% .06 152); }
+.kh-estado-entregado { background: var(--success-soft); color: var(--success-dark); border-color: var(--success-soft-border); }
 .kh-estado-listo,
 .kh-estado-preparando,
 .kh-estado-en_espera { background: var(--accent-soft); color: var(--accent-dark); border-color: oklch(56.3% .188 260 / .28); }

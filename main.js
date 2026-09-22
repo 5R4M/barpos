@@ -8,6 +8,8 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 420,
     height: 540,
+    useContentSize: true,
+    center: true,
     resizable: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -25,9 +27,10 @@ function createWindow() {
 
 ipcMain.handle('window:expand', () => {
   mainWindow.setOpacity(0);
+  if (mainWindow.isMaximized()) mainWindow.unmaximize();
   mainWindow.setResizable(true);
   mainWindow.setMinimumSize(1100, 680);
-  mainWindow.setSize(1380, 860, false);
+  mainWindow.setContentSize(1380, 860);
   mainWindow.center();
 });
 
@@ -37,9 +40,10 @@ ipcMain.handle('window:show', () => {
 
 ipcMain.handle('window:collapse', () => {
   mainWindow.setOpacity(0);
+  if (mainWindow.isMaximized()) mainWindow.unmaximize();
   mainWindow.setResizable(true);
   mainWindow.setMinimumSize(1, 1);
-  mainWindow.setSize(420, 540, false);
+  mainWindow.setContentSize(420, 540);
   mainWindow.setResizable(false);
   mainWindow.center();
   mainWindow.setOpacity(1);

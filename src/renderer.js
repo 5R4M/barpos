@@ -2040,7 +2040,7 @@ function renderWaiterHistory(data) {
             <span class="wh-chevron" id="${gId}-chev">${icon('chevron', 16)}</span>
           </div>
         </div>
-        <div class="wh-orders-list" id="${gId}">${ordRows}</div>
+        <div class="wh-orders-list" id="${gId}"><div class="wh-orders-inner">${ordRows}</div></div>
       </div>`;
   }).join('');
 }

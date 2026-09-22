@@ -8,6 +8,8 @@ colors:
   accent-azul-tenue-borde: "oklch(84% 0.06 256)"
   verde-cobro: "oklch(52.3% 0.190 149)"
   verde-cobro-profundo: "oklch(44.0% 0.180 149)"
+  verde-cobro-tenue: "oklch(97.6% 0.026 152)"
+  verde-cobro-tenue-borde: "oklch(90.0% 0.060 152)"
   rojo-ocupada: "oklch(57.7% 0.208 25)"
   rojo-ocupada-profundo: "oklch(51.7% 0.215 26)"
   rojo-ocupada-tenue: "oklch(84.0% 0.045 22)"
@@ -224,6 +226,7 @@ Azul de marca frío como única voz de acción, verde y rojo estrictamente semá
 ### Secondary
 - **Verde Cobro**: dinero que ya entró. Botón COBRAR, totales recaudados. Nunca se usa como color de marca, de acento decorativo, ni como sinónimo genérico de "activo" o "disponible": esos estados van neutros.
 - **Verde Cobro Profundo**: texto y cifras sobre superficies verde tenue; el `:hover` del botón COBRAR.
+- **Verde Cobro Tenue** y **Verde Cobro Tenue Borde**: fondo y borde de la superficie que resalta una cifra ya cobrada — la fila de total en el corte, la tarjeta verde del historial, el estado "Entregado" en la comanda de cocina. El mismo par fondo/borde que Azul Tenue, en la voz de verde.
 
 ### Tertiary
 - **Rojo Ocupada**: estado ocupado y acción destructiva. Punto de estado de la mesa, botón Liberar, badge del icono de confirmación al eliminar.
