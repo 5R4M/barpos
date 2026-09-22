@@ -82,20 +82,44 @@ select:focus-visible,
 /* ═══════════════════════════════════════════════════════════
    LOGIN
 ═══════════════════════════════════════════════════════════ */
+/* El turno de noche, un momento antes de fichar: azul profundo de fondo,
+   un único punto de luz cálida abajo, como la única lámpara encendida
+   sobre la barra. Es la única pantalla con licencia para tener carácter. */
 .login-bg {
+  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a3667 0%, #2563eb 55%, #38bdf8 100%);
+  overflow: hidden;
+  background:
+    radial-gradient(560px 420px at 50% 88%, oklch(78% .13 75 / .20), transparent 65%),
+    linear-gradient(160deg, oklch(22% .05 262) 0%, oklch(28% .08 263) 42%, oklch(38% .13 262) 72%, oklch(50% .16 260) 100%);
+}
+/* Viñeta sutil: oscurece las esquinas para que el ojo caiga en la tarjeta,
+   nunca en el fondo. */
+.login-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 100% at 50% 45%, transparent 55%, oklch(15% .04 262 / .35));
+  pointer-events: none;
 }
 
 .login-card {
+  position: relative;
   background: var(--card-bg);
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 40px 44px;
   width: 380px;
   box-shadow: var(--shadow-float);
+  animation: loginCardIn var(--dur-slow) var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) {
+  .login-card { animation: none; }
+}
+@keyframes loginCardIn {
+  from { opacity: 0; transform: translateY(10px) scale(.98); }
 }
 
 .login-logo {
@@ -103,13 +127,23 @@ select:focus-visible,
   margin-bottom: 32px;
 }
 
-.login-logo .logo-icon { display: flex; justify-content: center; color: var(--accent); margin-bottom: 8px; }
+.login-logo .logo-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
 .login-logo h1 { font-size: 28px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
 .login-logo p  { color: var(--text-light); font-size: 13px; margin-top: 4px; }
 
 .login-error {
   background: #fef2f2;
-  color: var(--danger);
+  color: var(--danger-dark);
   border: 1px solid #fecaca;
   border-radius: 8px;
   padding: 10px 14px;
@@ -1048,7 +1082,7 @@ select:focus-visible,
   font-weight: 600;
   color: var(--text);
   background-color: var(--card-bg);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2354647b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 9px center;
   appearance: none;
@@ -1149,8 +1183,8 @@ select:focus-visible,
   font-size: 13px;
 }
 .menu-empty svg { opacity: .35; }
-.btn-secondary { background: #e2e8f0; color: var(--text); }
-.btn-secondary:hover { background: #cbd5e1; }
+.btn-secondary { background: var(--line); color: var(--text); }
+.btn-secondary:hover { background: var(--line-strong); }
 .btn-outline   { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
 .btn-outline:hover   { border-color: var(--accent); color: var(--accent); }
 .btn-sm { min-height: 32px; padding: 5px 11px; font-size: 12px; }
@@ -1254,10 +1288,10 @@ select:focus-visible,
   background: var(--card-bg);
   color: var(--text);
 }
-.form-group input::placeholder { color: #a3b0c2; }
+.form-group input::placeholder { color: var(--text-light); }
 .form-group select {
   padding-right: 34px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2354647b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
   appearance: none;
@@ -1639,7 +1673,7 @@ button.hist-stat-card-btn.active .hist-stat-label { color: var(--accent-dark); }
   display: none;
   border-top: 1px solid var(--border);
   padding: 0 18px 16px;
-  background: #fafbfc;
+  background: var(--surface-2);
 }
 .hist-order-items.open { display: block; }
 
@@ -1707,7 +1741,7 @@ button.hist-stat-card-btn.active .hist-stat-label { color: var(--accent-dark); }
   border-radius: 4px 4px 0 0;
 }
 .corte-tab-btn:hover  { color: var(--accent); }
-.corte-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(59,130,246,.07); }
+.corte-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: oklch(56.3% .188 260 / .07); }
 
 .corte-tab-panel { display: none; }
 .corte-tab-panel.active { display: block; }
@@ -1729,7 +1763,7 @@ button.hist-stat-card-btn.active .hist-stat-label { color: var(--accent-dark); }
   user-select: none;
   transition: background .15s;
 }
-.cmt-card-hdr:hover { background: #dbeafe; }
+.cmt-card-hdr:hover { background: var(--accent-soft); }
 .cmt-card-name {
   display: flex;
   align-items: center;
@@ -1758,7 +1792,7 @@ button.hist-stat-card-btn.active .hist-stat-label { color: var(--accent-dark); }
 
 .cmt-prod-summary {
   padding: 14px 16px;
-  background: #f8fafc;
+  background: var(--surface-2);
   border-bottom: 1px solid var(--border);
 }
 .cmt-prod-summary h5,
@@ -1863,7 +1897,7 @@ button.hist-stat-card-btn.active .hist-stat-label { color: var(--accent-dark); }
 .corte-table .right    { text-align: right; }
 .corte-table .bold     { font-weight: 700; }
 .corte-total-row td {
-  background: #f0fdf4;
+  background: oklch(97.6% .026 152);
   font-weight: 700;
   font-size: 14px;
   color: var(--success-dark);

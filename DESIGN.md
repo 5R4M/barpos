@@ -180,6 +180,15 @@ components:
     textColor: "{colors.gris-pizarra}"
     rounded: "{rounded.full}"
     size: "44px"
+  badge:
+    backgroundColor: "{colors.superficie-elevada}"
+    textColor: "{colors.gris-pizarra}"
+    typography: "{typography.label}"
+    rounded: "{rounded.pill}"
+    padding: "3px 9px"
+  badge-ocupada:
+    backgroundColor: "#fef2f2"
+    textColor: "{colors.rojo-ocupada-profundo}"
 ---
 
 # Design System: BarPOS — La Taberna
@@ -322,10 +331,13 @@ Carácter general: **táctil y sobrio**. Objetivos grandes, respuesta inmediata 
 ### Navigation
 - **Style:** barra lateral fija de 220px sobre Navy Panel. Los ítems son pastillas de 10px de radio con margen lateral de 10px, no filas a sangre completa.
 - **Estados:** reposo con texto al 62% de blanco; hover sube el texto a blanco puro con un velo al 7%; activo lleva relleno azul al 22%, borde azul claro al 28% y peso 600.
-- **Árbol de administración:** los hijos se revelan con `max-height` y el chevron rota 90°. La sangría es de 14px, sin línea guía vertical.
+- **Árbol de administración:** los hijos se revelan con `grid-template-rows: 0fr → 1fr` (no `max-height`: así la curva de easing se mide contra la altura real del contenido, no contra un tope adivinado) y el chevron rota 90°. La sangría es de 14px, sin línea guía vertical.
 
 ### Card de Mesa (componente firma)
 La pieza central de la app. Estructura fija de tres bloques: arriba el tile con el número o inicial más el estado (punto + palabra en versalita); en medio el nombre y la capacidad con icono; abajo, tras un divisor de 1px, el pie. El pie cambia según el estado: una mesa ocupada muestra el tiempo transcurrido desde que se abrió la orden más el botón Liberar; una mesa libre muestra "Abrir orden →", cuya flecha se desplaza 2px al pasar el puntero. El tiempo se recalcula cada 60 segundos mientras la vista está visible.
+
+### Login (única pantalla con carácter)
+El turno de noche, un momento antes de fichar. Fondo: degradado diagonal azul marino profundo (`oklch(22% .05 262)` → `oklch(50% .16 260)`) con un único resplandor cálido y difuso (`oklch(78% .13 75 / .20)`) anclado al 88% inferior — la única lámpara encendida sobre la barra — y una viñeta radial que oscurece las esquinas para que el ojo caiga en la tarjeta. Es la única superficie de la app con permiso para un cuarto color (el cálido), y solo como resplandor atmosférico al 20% de opacidad, nunca como una superficie sólida. El ícono va en una insignia circular de Azul Tenue (76px), no suelto. La tarjeta entra con un fundido + ascenso de 10px en `--dur-slow` (respeta `prefers-reduced-motion`), la única coreografía de entrada que existe en toda la app — deliberada, y contenida a esta única pantalla.
 
 ## 6. Do's and Don'ts
 

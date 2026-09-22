@@ -1,19 +1,19 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-10T00:00:00.000Z",
+  "generatedAt": "2026-09-21T00:00:00.000Z",
   "title": "Design System: BarPOS — La Taberna",
   "extensions": {
     "colorMeta": {
       "accent-azul": {
         "role": "primary",
         "displayName": "Azul Acción",
-        "canonical": "oklch(62.3% 0.188 260)",
+        "canonical": "oklch(56.3% 0.188 260)",
         "tonalRamp": [
           "oklch(20% 0.07 260)",
           "oklch(31% 0.11 260)",
           "oklch(42% 0.15 260)",
-          "oklch(54.6% 0.215 263)",
-          "oklch(62.3% 0.188 260)",
+          "oklch(50.3% 0.200 262)",
+          "oklch(56.3% 0.188 260)",
           "oklch(74% 0.12 258)",
           "oklch(86% 0.06 257)",
           "oklch(95% 0.02 256)"
@@ -22,28 +22,28 @@
       "verde-cobro": {
         "role": "secondary",
         "displayName": "Verde Cobro",
-        "canonical": "oklch(72.3% 0.192 150)",
+        "canonical": "oklch(52.3% 0.190 149)",
         "tonalRamp": [
-          "oklch(22% 0.06 150)",
-          "oklch(34% 0.09 150)",
-          "oklch(46% 0.13 150)",
-          "oklch(62.7% 0.170 149)",
-          "oklch(72.3% 0.192 150)",
-          "oklch(82% 0.12 150)",
-          "oklch(90% 0.07 151)",
+          "oklch(16% 0.05 150)",
+          "oklch(26% 0.08 150)",
+          "oklch(36% 0.11 150)",
+          "oklch(44.0% 0.180 149)",
+          "oklch(52.3% 0.190 149)",
+          "oklch(68% 0.12 150)",
+          "oklch(84% 0.07 151)",
           "oklch(97.6% 0.026 152)"
         ]
       },
       "rojo-ocupada": {
         "role": "tertiary",
         "displayName": "Rojo Ocupada",
-        "canonical": "oklch(63.7% 0.208 25)",
+        "canonical": "oklch(57.7% 0.208 25)",
         "tonalRamp": [
           "oklch(22% 0.07 25)",
           "oklch(34% 0.11 26)",
           "oklch(46% 0.16 27)",
-          "oklch(57.7% 0.215 27)",
-          "oklch(63.7% 0.208 25)",
+          "oklch(51.7% 0.215 26)",
+          "oklch(57.7% 0.208 25)",
           "oklch(76% 0.13 24)",
           "oklch(88% 0.06 24)",
           "oklch(96.5% 0.02 24)"
@@ -57,7 +57,7 @@
           "oklch(18% 0.03 260)",
           "oklch(27.9% 0.037 260)",
           "oklch(40% 0.04 259)",
-          "oklch(55.4% 0.041 257)",
+          "oklch(50.0% 0.041 257)",
           "oklch(70% 0.03 257)",
           "oklch(86.8% 0.014 256)",
           "oklch(92.5% 0.008 258)",
@@ -93,15 +93,55 @@
           "oklch(96.8% 0.014 254)",
           "oklch(99.4% 0.002 258)"
         ]
+      },
+      "rojo-ocupada-tenue": {
+        "role": "tertiary-soft",
+        "displayName": "Rojo Ocupada Tenue",
+        "canonical": "oklch(84.0% 0.045 22)",
+        "tonalRamp": [
+          "oklch(51.7% 0.215 26)",
+          "oklch(60% 0.15 24)",
+          "oklch(68% 0.10 23)",
+          "oklch(76% 0.07 22)",
+          "oklch(84.0% 0.045 22)",
+          "oklch(89% 0.03 22)",
+          "oklch(94% 0.015 22)",
+          "oklch(98% 0.005 22)"
+        ]
+      },
+      "accent-azul-tenue-borde": {
+        "role": "primary-soft-border",
+        "displayName": "Azul Tenue Borde",
+        "canonical": "oklch(84% 0.06 256)",
+        "tonalRamp": [
+          "oklch(56.3% 0.188 260)",
+          "oklch(64% 0.14 258)",
+          "oklch(72% 0.10 257)",
+          "oklch(78% 0.08 256)",
+          "oklch(84% 0.06 256)",
+          "oklch(89% 0.04 256)",
+          "oklch(94% 0.02 256)",
+          "oklch(98% 0.008 256)"
+        ]
+      },
+      "nav-item-active-borde": {
+        "role": "neutral-on-dark",
+        "displayName": "Borde Activo del Nav",
+        "canonical": "rgba(147,197,253,0.28)"
       }
     },
     "typographyMeta": {
       "display": { "displayName": "Display", "purpose": "Solo el nombre del bar en el login. No aparece dentro de la app." },
       "headline": { "displayName": "Headline", "purpose": "Título de sección en la barra superior, uno por pantalla." },
+      "panel-title": { "displayName": "Panel Title", "purpose": "Mismo trabajo que Headline en un contenedor más chico: nombre de mesa en el panel de la orden, encabezado de modal." },
       "title": { "displayName": "Title", "purpose": "Nombre de mesa, de producto, encabezado de modal." },
       "body": { "displayName": "Body", "purpose": "Texto corrido y contenido de tablas." },
+      "meta": { "displayName": "Meta", "purpose": "Escalón real entre Label y Body: chips de categoría, filtros, texto secundario de tarjetas." },
       "label": { "displayName": "Label", "purpose": "Versalita para metadatos: cabeceras de tabla, estado de mesa, filtros." },
-      "data": { "displayName": "Data", "purpose": "Cifras que cambian o se alinean. Siempre tabular-nums." }
+      "data": { "displayName": "Data", "purpose": "El total de la orden en el panel de cobro. Siempre tabular-nums." },
+      "total": { "displayName": "Total", "purpose": "La misma cifra de énfasis en un contenedor más denso: total del recibo, subtotal de tabla, total por mesero." },
+      "stat": { "displayName": "Stat", "purpose": "Cifra ancla de una tarjeta o panel de estadística: corte del día, historial, resumen de cobro." },
+      "brand-mark": { "displayName": "Brand Mark", "purpose": "El nombre 'BarPOS' en la barra lateral. Un solo lugar, no se reutiliza." }
     },
     "shadows": [
       {
@@ -111,7 +151,7 @@
       },
       {
         "name": "anillo-foco",
-        "value": "0 0 0 3px oklch(62.3% .188 260 / .18)",
+        "value": "0 0 0 3px oklch(56.3% .188 260 / .18)",
         "purpose": "Estado de foco en campos de formulario, no elevación. Acompaña al borde azul."
       }
     ],
@@ -133,7 +173,7 @@
       "refersTo": "button-primary",
       "description": "Acción principal de la pantalla. Una por vista.",
       "html": "<button class=\"ds-btn-primary\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.2\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M12 5v14\"/><path d=\"M5 12h14\"/></svg>Nuevo Producto</button>",
-      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 16px; background: oklch(62.3% .188 260); color: oklch(99.4% .002 258); border: none; border-radius: 8px; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-btn-primary svg { flex-shrink: 0; opacity: .85; } .ds-btn-primary:hover { background: oklch(54.6% .215 263); } .ds-btn-primary:hover svg { opacity: 1; } .ds-btn-primary:active { transform: scale(.97); } .ds-btn-primary:focus-visible { outline: 2.5px solid oklch(62.3% .188 260); outline-offset: 2px; }"
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 16px; background: oklch(56.3% .188 260); color: oklch(99.4% .002 258); border: none; border-radius: 8px; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-btn-primary svg { flex-shrink: 0; opacity: .85; } .ds-btn-primary:hover { background: oklch(50.3% .200 262); } .ds-btn-primary:hover svg { opacity: 1; } .ds-btn-primary:active { transform: scale(.97); } .ds-btn-primary:focus-visible { outline: 2.5px solid oklch(56.3% .188 260); outline-offset: 2px; }"
     },
     {
       "name": "Botón de contorno",
@@ -141,7 +181,7 @@
       "refersTo": "button-outline",
       "description": "Botón por defecto de barras de herramientas. Neutro en reposo, azul al pasar el puntero.",
       "html": "<button class=\"ds-btn-outline\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 12a9 9 0 1 1-2.64-6.36\"/><path d=\"M21 3v6h-6\"/></svg>Actualizar</button>",
-      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 16px; background: transparent; color: oklch(27.9% .037 260); border: 1.5px solid oklch(86.8% .014 256); border-radius: 8px; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-btn-outline:hover { background: oklch(93.8% .028 256); border-color: oklch(62.3% .188 260); color: oklch(54.6% .215 263); } .ds-btn-outline:active { transform: scale(.97); }"
+      "css": ".ds-btn-outline { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 16px; background: transparent; color: oklch(27.9% .037 260); border: 1.5px solid oklch(86.8% .014 256); border-radius: 8px; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: background-color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-btn-outline:hover { background: oklch(93.8% .028 256); border-color: oklch(56.3% .188 260); color: oklch(50.3% .200 262); } .ds-btn-outline:active { transform: scale(.97); }"
     },
     {
       "name": "Card de mesa (libre)",
@@ -149,7 +189,7 @@
       "refersTo": "card-mesa",
       "description": "Componente firma. Tile con número, estado, capacidad y pie con la acción de abrir orden.",
       "html": "<div class=\"ds-card-mesa\" role=\"button\" tabindex=\"0\" aria-label=\"Mesa 2, libre\"><div class=\"ds-card-mesa-top\"><span class=\"ds-card-mesa-tile\">2</span><span class=\"ds-card-mesa-state\"><span class=\"ds-card-mesa-dot\"></span>Libre</span></div><div class=\"ds-card-mesa-body\"><div class=\"ds-card-mesa-name\">Mesa 2</div><div class=\"ds-card-mesa-meta\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\"/><path d=\"M16 3.13a4 4 0 0 1 0 7.75\"/></svg>4 personas</div></div><div class=\"ds-card-mesa-foot\"><span class=\"ds-card-mesa-hint\">Abrir orden <svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h13\"/><path d=\"m12 5 7 7-7 7\"/></svg></span></div></div>",
-      "css": ".ds-card-mesa { position: relative; display: flex; flex-direction: column; width: 210px; min-height: 152px; padding: 14px 14px 12px; background: oklch(99.4% .002 258); border: 1px solid oklch(92.5% .008 258); border-radius: 14px; cursor: pointer; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; color: oklch(27.9% .037 260); transition: background-color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-card-mesa-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 12px; } .ds-card-mesa-tile { display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 11px; background: oklch(97.7% .005 256); border: 1px solid oklch(92.5% .008 258); color: oklch(40% .04 259); font-size: 18px; font-weight: 600; letter-spacing: -.5px; font-variant-numeric: tabular-nums; transition: background-color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), color 180ms cubic-bezier(.23,1,.32,1); } .ds-card-mesa-state { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; color: oklch(55.4% .041 257); } .ds-card-mesa-dot { width: 7px; height: 7px; border-radius: 50%; background: oklch(72.3% .192 150); } .ds-card-mesa-body { flex: 1; } .ds-card-mesa-name { font-size: 14.5px; font-weight: 650; letter-spacing: -.1px; } .ds-card-mesa-meta { display: flex; align-items: center; gap: 5px; margin-top: 3px; font-size: 11.5px; color: oklch(55.4% .041 257); } .ds-card-mesa-meta svg { opacity: .7; } .ds-card-mesa-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid oklch(92.5% .008 258); min-height: 38px; } .ds-card-mesa-hint { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: oklch(55.4% .041 257); transition: color 180ms cubic-bezier(.23,1,.32,1); } .ds-card-mesa-hint svg { transition: transform 180ms cubic-bezier(.23,1,.32,1); } @media (hover: hover) and (pointer: fine) { .ds-card-mesa:hover { background: oklch(97.7% .005 256); border-color: oklch(86.8% .014 256); } .ds-card-mesa:hover .ds-card-mesa-tile { background: oklch(93.8% .028 256); border-color: oklch(84% .06 256); color: oklch(54.6% .215 263); } .ds-card-mesa:hover .ds-card-mesa-hint { color: oklch(54.6% .215 263); } .ds-card-mesa:hover .ds-card-mesa-hint svg { transform: translateX(2px); } } .ds-card-mesa:active { transform: scale(.985); } .ds-card-mesa:focus-visible { outline: 2.5px solid oklch(62.3% .188 260); outline-offset: 2px; }"
+      "css": ".ds-card-mesa { position: relative; display: flex; flex-direction: column; width: 210px; min-height: 152px; padding: 14px 14px 12px; background: oklch(99.4% .002 258); border: 1px solid oklch(92.5% .008 258); border-radius: 14px; cursor: pointer; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; color: oklch(27.9% .037 260); transition: background-color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-card-mesa-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 12px; } .ds-card-mesa-tile { display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 11px; background: oklch(97.7% .005 256); border: 1px solid oklch(92.5% .008 258); color: oklch(40% .04 259); font-size: 18px; font-weight: 600; letter-spacing: -.5px; font-variant-numeric: tabular-nums; transition: background-color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), color 180ms cubic-bezier(.23,1,.32,1); } .ds-card-mesa-state { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; color: oklch(50.0% .041 257); } .ds-card-mesa-dot { width: 7px; height: 7px; border-radius: 50%; background: oklch(52.3% .190 149); } .ds-card-mesa-body { flex: 1; } .ds-card-mesa-name { font-size: 14.5px; font-weight: 650; letter-spacing: -.1px; } .ds-card-mesa-meta { display: flex; align-items: center; gap: 5px; margin-top: 3px; font-size: 11.5px; color: oklch(50.0% .041 257); } .ds-card-mesa-meta svg { opacity: .7; } .ds-card-mesa-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid oklch(92.5% .008 258); min-height: 38px; } .ds-card-mesa-hint { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: oklch(50.0% .041 257); transition: color 180ms cubic-bezier(.23,1,.32,1); } .ds-card-mesa-hint svg { transition: transform 180ms cubic-bezier(.23,1,.32,1); } @media (hover: hover) and (pointer: fine) { .ds-card-mesa:hover { background: oklch(97.7% .005 256); border-color: oklch(86.8% .014 256); } .ds-card-mesa:hover .ds-card-mesa-tile { background: oklch(93.8% .028 256); border-color: oklch(84% .06 256); color: oklch(50.3% .200 262); } .ds-card-mesa:hover .ds-card-mesa-hint { color: oklch(50.3% .200 262); } .ds-card-mesa:hover .ds-card-mesa-hint svg { transform: translateX(2px); } } .ds-card-mesa:active { transform: scale(.985); } .ds-card-mesa:focus-visible { outline: 2.5px solid oklch(56.3% .188 260); outline-offset: 2px; }"
     },
     {
       "name": "Card de mesa (ocupada)",
@@ -157,7 +197,7 @@
       "refersTo": "card-mesa-ocupada",
       "description": "Misma estructura, tinte rojo apenas perceptible, tiempo transcurrido y acción de liberar en el pie.",
       "html": "<div class=\"ds-card-mesa-occ\" role=\"button\" tabindex=\"0\" aria-label=\"Mesa 1, ocupada\"><div class=\"ds-card-mesa-top\"><span class=\"ds-card-mesa-tile-occ\">1</span><span class=\"ds-card-mesa-state-occ\"><span class=\"ds-card-mesa-dot-occ\"></span>Ocupada</span></div><div class=\"ds-card-mesa-body\"><div class=\"ds-card-mesa-name\">Mesa 1</div><div class=\"ds-card-mesa-meta\">2 personas</div></div><div class=\"ds-card-mesa-foot\"><span class=\"ds-card-mesa-time\"><svg width=\"13\" height=\"13\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg>42 min</span><button class=\"ds-btn-liberar\">Liberar</button></div></div>",
-      "css": ".ds-card-mesa-occ { display: flex; flex-direction: column; width: 210px; min-height: 152px; padding: 14px 14px 12px; background: #fffafa; border: 1px solid #f3d7d7; border-radius: 14px; cursor: pointer; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; color: oklch(27.9% .037 260); transition: background-color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-card-mesa-tile-occ { display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 11px; background: #fef2f2; border: 1px solid #fcdada; color: oklch(57.7% .215 27); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; } .ds-card-mesa-state-occ { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; color: oklch(57.7% .215 27); } .ds-card-mesa-dot-occ { width: 7px; height: 7px; border-radius: 50%; background: oklch(63.7% .208 25); } .ds-card-mesa-time { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: oklch(55.4% .041 257); font-variant-numeric: tabular-nums; } .ds-card-mesa-time svg { opacity: .65; } .ds-btn-liberar { display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; background: transparent; border: 1px solid #f2d9d9; border-radius: 8px; color: #b91c1c; font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; transition: background-color 150ms cubic-bezier(.23,1,.32,1), border-color 150ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-btn-liberar:hover { background: #fef2f2; border-color: #eab6b6; } .ds-btn-liberar:active { transform: scale(.95); } .ds-card-mesa-occ:active { transform: scale(.985); }"
+      "css": ".ds-card-mesa-occ { display: flex; flex-direction: column; width: 210px; min-height: 152px; padding: 14px 14px 12px; background: #fffafa; border: 1px solid oklch(84% .045 22); border-radius: 14px; cursor: pointer; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; color: oklch(27.9% .037 260); transition: background-color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-card-mesa-tile-occ { display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 11px; background: #fef2f2; border: 1px solid oklch(84% .045 22); color: oklch(51.7% .215 26); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; } .ds-card-mesa-state-occ { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; color: oklch(51.7% .215 26); } .ds-card-mesa-dot-occ { width: 7px; height: 7px; border-radius: 50%; background: oklch(57.7% .208 25); } .ds-card-mesa-time { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 600; color: oklch(50.0% .041 257); font-variant-numeric: tabular-nums; } .ds-card-mesa-time svg { opacity: .65; } .ds-btn-liberar { display: inline-flex; align-items: center; min-height: 30px; padding: 0 10px; background: transparent; border: 1px solid oklch(84% .045 22); border-radius: 8px; color: oklch(51.7% .215 26); font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; transition: background-color 150ms cubic-bezier(.23,1,.32,1), border-color 150ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-btn-liberar:hover { background: #fef2f2; border-color: oklch(84% .045 22); } .ds-btn-liberar:active { transform: scale(.95); } .ds-card-mesa-occ:active { transform: scale(.985); }"
     },
     {
       "name": "Campo de formulario",
@@ -165,7 +205,7 @@
       "refersTo": "input-field",
       "description": "Campo de texto con borde de 1px y anillo de foco azul al 18%.",
       "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Nombre del producto</span><input class=\"ds-input\" type=\"text\" value=\"Cerveza Nacional\" placeholder=\"Ej: Cerveza Nacional\"></label>",
-      "css": ".ds-field { display: block; width: 280px; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; } .ds-field-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: oklch(55.4% .041 257); } .ds-input { width: 100%; min-height: 42px; padding: 9px 12px; background: oklch(99.4% .002 258); color: oklch(27.9% .037 260); border: 1px solid oklch(86.8% .014 256); border-radius: 9px; font-family: inherit; font-size: 14px; transition: border-color 150ms cubic-bezier(.23,1,.32,1), box-shadow 150ms cubic-bezier(.23,1,.32,1); } .ds-input::placeholder { color: #a3b0c2; } .ds-input:focus { outline: none; border-color: oklch(62.3% .188 260); box-shadow: 0 0 0 3px oklch(62.3% .188 260 / .18); }"
+      "css": ".ds-field { display: block; width: 280px; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; } .ds-field-label { display: block; margin-bottom: 6px; font-size: 13px; font-weight: 600; color: oklch(50.0% .041 257); } .ds-input { width: 100%; min-height: 42px; padding: 9px 12px; background: oklch(99.4% .002 258); color: oklch(27.9% .037 260); border: 1px solid oklch(86.8% .014 256); border-radius: 9px; font-family: inherit; font-size: 14px; transition: border-color 150ms cubic-bezier(.23,1,.32,1), box-shadow 150ms cubic-bezier(.23,1,.32,1); } .ds-input::placeholder { color: #a3b0c2; } .ds-input:focus { outline: none; border-color: oklch(56.3% .188 260); box-shadow: 0 0 0 3px oklch(56.3% .188 260 / .18); }"
     },
     {
       "name": "Select con chevron propio",
@@ -173,7 +213,7 @@
       "refersTo": "input-field",
       "description": "Select nativo con appearance:none y chevron SVG embebido. Requiere img-src 'self' data: en el CSP.",
       "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Tipo</span><select class=\"ds-select\"><option>Bebida</option><option>Boquita</option><option>Comida</option></select></label>",
-      "css": ".ds-select { width: 100%; min-height: 42px; padding: 9px 34px 9px 12px; background-color: oklch(99.4% .002 258); background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\"); background-repeat: no-repeat; background-position: right 10px center; appearance: none; color: oklch(27.9% .037 260); border: 1px solid oklch(86.8% .014 256); border-radius: 9px; font-family: inherit; font-size: 14px; cursor: pointer; transition: border-color 150ms cubic-bezier(.23,1,.32,1), box-shadow 150ms cubic-bezier(.23,1,.32,1); } .ds-select:focus { outline: none; border-color: oklch(62.3% .188 260); box-shadow: 0 0 0 3px oklch(62.3% .188 260 / .18); }"
+      "css": ".ds-select { width: 100%; min-height: 42px; padding: 9px 34px 9px 12px; background-color: oklch(99.4% .002 258); background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\"); background-repeat: no-repeat; background-position: right 10px center; appearance: none; color: oklch(27.9% .037 260); border: 1px solid oklch(86.8% .014 256); border-radius: 9px; font-family: inherit; font-size: 14px; cursor: pointer; transition: border-color 150ms cubic-bezier(.23,1,.32,1), box-shadow 150ms cubic-bezier(.23,1,.32,1); } .ds-select:focus { outline: none; border-color: oklch(56.3% .188 260); box-shadow: 0 0 0 3px oklch(56.3% .188 260 / .18); }"
     },
     {
       "name": "Pastilla de categoría",
@@ -181,7 +221,7 @@
       "refersTo": "chip-categoria",
       "description": "Filtro del menú de productos. La activa se rellena de azul; las categorías concretas usan un escalón más chico.",
       "html": "<div class=\"ds-chip-row\"><button class=\"ds-chip ds-chip-active\">Todos</button><button class=\"ds-chip\">Bebidas</button><button class=\"ds-chip\">Boquitas</button><button class=\"ds-chip ds-chip-sub\">Cervezas</button></div>",
-      "css": ".ds-chip-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } .ds-chip { min-height: 40px; padding: 6px 16px; background: oklch(99.4% .002 258); border: 1px solid oklch(86.8% .014 256); border-radius: 20px; color: oklch(55.4% .041 257); font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: border-color 180ms cubic-bezier(.23,1,.32,1), color 180ms cubic-bezier(.23,1,.32,1), background-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-chip:hover { border-color: oklch(62.3% .188 260); color: oklch(54.6% .215 263); background: oklch(93.8% .028 256); } .ds-chip:active { transform: scale(.97); } .ds-chip-active { background: oklch(62.3% .188 260); border-color: oklch(62.3% .188 260); color: oklch(99.4% .002 258); } .ds-chip-sub { min-height: 34px; padding: 5px 13px; font-size: 11.5px; background: oklch(97.7% .005 256); border-color: oklch(92.5% .008 258); }"
+      "css": ".ds-chip-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; } .ds-chip { min-height: 40px; padding: 6px 16px; background: oklch(99.4% .002 258); border: 1px solid oklch(86.8% .014 256); border-radius: 20px; color: oklch(50.0% .041 257); font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: border-color 180ms cubic-bezier(.23,1,.32,1), color 180ms cubic-bezier(.23,1,.32,1), background-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-chip:hover { border-color: oklch(56.3% .188 260); color: oklch(50.3% .200 262); background: oklch(93.8% .028 256); } .ds-chip:active { transform: scale(.97); } .ds-chip-active { background: oklch(56.3% .188 260); border-color: oklch(56.3% .188 260); color: oklch(99.4% .002 258); } .ds-chip-sub { min-height: 34px; padding: 5px 13px; font-size: 11.5px; background: oklch(97.7% .005 256); border-color: oklch(92.5% .008 258); }"
     },
     {
       "name": "Ítem de navegación",
@@ -192,12 +232,20 @@
       "css": ".ds-nav { width: 220px; padding: 12px 0; background: oklch(31.8% .089 262); font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; } .ds-nav-item { display: flex; align-items: center; gap: 10px; width: calc(100% - 20px); margin: 2px 10px; padding: 11px 14px; background: none; border: 1px solid transparent; border-radius: 10px; color: rgba(255,255,255,.62); font-family: inherit; font-size: 14px; font-weight: 500; text-align: left; cursor: pointer; transition: background-color 180ms cubic-bezier(.23,1,.32,1), color 180ms cubic-bezier(.23,1,.32,1), border-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-nav-ico { display: inline-flex; align-items: center; justify-content: center; width: 22px; opacity: .85; } .ds-nav-item:hover { background: rgba(255,255,255,.07); color: #fff; } .ds-nav-item:active { transform: scale(.98); } .ds-nav-item-active { background: rgba(59,130,246,.22); border-color: rgba(147,197,253,.28); color: #fff; font-weight: 600; } .ds-nav-item-active .ds-nav-ico { opacity: 1; }"
     },
     {
+      "name": "Badge",
+      "kind": "custom",
+      "refersTo": "badge",
+      "description": "Metadato neutro por defecto. El único badge con color es Ocupada, que es un estado semántico real, no una etiqueta.",
+      "html": "<div class=\"ds-badge-row\"><span class=\"ds-badge\">Mesero</span><span class=\"ds-badge ds-badge-inactive\">Inactivo</span><span class=\"ds-badge ds-badge-ocupada\">Ocupada</span></div>",
+      "css": ".ds-badge-row { display: flex; gap: 8px; align-items: center; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; } .ds-badge { display: inline-block; padding: 3px 9px; border-radius: 20px; background: oklch(97.7% .005 256); color: oklch(50.0% .041 257); border: 1px solid oklch(86.8% .014 256); font-size: 11px; font-weight: 700; text-transform: capitalize; } .ds-badge-inactive { opacity: .75; } .ds-badge-ocupada { background: #fef2f2; color: oklch(51.7% .215 26); border-color: #fecaca; }"
+    },
+    {
       "name": "Toast",
       "kind": "custom",
       "refersTo": "button-primary",
       "description": "Confirmación efímera con icono según tipo. Entra desde la derecha con escala 0.97, nunca desde 0.",
       "html": "<div class=\"ds-toast ds-toast-success\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 6 9 17l-5-5\"/></svg><span>Mesa liberada</span></div>",
-      "css": ".ds-toast { display: flex; align-items: center; gap: 9px; max-width: 340px; padding: 12px 18px; border-radius: 10px; color: #fff; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 13.5px; font-weight: 600; box-shadow: 0 20px 45px -18px oklch(27.9% .037 260 / .35); animation: ds-toast-in 240ms cubic-bezier(.23,1,.32,1); } .ds-toast svg { opacity: .9; flex-shrink: 0; } .ds-toast-success { background: oklch(62.7% .170 149); } @keyframes ds-toast-in { from { transform: translateX(24px) scale(.97); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }"
+      "css": ".ds-toast { display: flex; align-items: center; gap: 9px; max-width: 340px; padding: 12px 18px; border-radius: 10px; color: #fff; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 13.5px; font-weight: 600; box-shadow: 0 20px 45px -18px oklch(27.9% .037 260 / .35); animation: ds-toast-in 240ms cubic-bezier(.23,1,.32,1); } .ds-toast svg { opacity: .9; flex-shrink: 0; } .ds-toast-success { background: oklch(44.0% .180 149); } @keyframes ds-toast-in { from { transform: translateX(24px) scale(.97); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }"
     },
     {
       "name": "Botón COBRAR",
@@ -205,7 +253,7 @@
       "refersTo": "button-cobrar",
       "description": "El final del flujo. La única pieza donde el color ocupa una superficie grande.",
       "html": "<button class=\"ds-btn-cobrar\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"20\" height=\"14\" x=\"2\" y=\"5\" rx=\"2\"/><line x1=\"2\" x2=\"22\" y1=\"10\" y2=\"10\"/></svg>COBRAR</button>",
-      "css": ".ds-btn-cobrar { display: flex; align-items: center; justify-content: center; gap: 8px; width: 280px; min-height: 52px; padding: 15px; background: oklch(72.3% .192 150); color: #fff; border: none; border-radius: 10px; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 16px; font-weight: 700; letter-spacing: .3px; cursor: pointer; transition: background-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-btn-cobrar:hover { background: oklch(62.7% .170 149); } .ds-btn-cobrar:active { transform: scale(.985); } .ds-btn-cobrar:disabled { background: oklch(86.8% .014 256); color: oklch(55.4% .041 257); cursor: not-allowed; transform: none; }"
+      "css": ".ds-btn-cobrar { display: flex; align-items: center; justify-content: center; gap: 8px; width: 280px; min-height: 52px; padding: 15px; background: oklch(52.3% .190 149); color: #fff; border: none; border-radius: 10px; font-family: 'Segoe UI Variable Text','Segoe UI',Inter,system-ui,sans-serif; font-size: 16px; font-weight: 700; letter-spacing: .3px; cursor: pointer; transition: background-color 180ms cubic-bezier(.23,1,.32,1), transform 120ms cubic-bezier(.23,1,.32,1); } .ds-btn-cobrar:hover { background: oklch(44.0% .180 149); } .ds-btn-cobrar:active { transform: scale(.985); } .ds-btn-cobrar:disabled { background: oklch(86.8% .014 256); color: oklch(50.0% .041 257); cursor: not-allowed; transform: none; }"
     }
   ],
   "narrative": {
